@@ -1,0 +1,52 @@
+<numberPlumber>
+  <flowPanel>
+    <numberPanel title="Drag Numbers">
+      <dropNumber value="0"/>
+      <dropNumber value="1"/>
+      <dropNumber value="2"/>
+      <dropNumber value="3"/>
+      <dropNumber value="4"/>
+      <dropNumber value="5"/>
+      <dropNumber value="6"/>
+      <dropNumber value="7"/>
+      <dropNumber value="8"/>
+      <dropNumber value="9"/>
+    </numberPanel>
+    <flowGroup colourIndex="1">
+      <map id="f" color="0x6644">
+        <inputFlow id="DragnDropSource1542" x="211" y="82" hide="false" flow="dragnDropSource" arg0="7" varName="x">
+          <hookup sinkFlow="DragnDropSource1542" sourceFlow="UnaryFlow908" padIndex="0"/>
+          <hookup sinkFlow="DragnDropSource1542" sourceFlow="BinaryFlow997" padIndex="0"/>
+        </inputFlow>
+        <binaryFlow id="BinaryFlow997" x="219" y="300" hide="false" flow="binaryFlow" op="plus">
+          <hookup sinkFlow="BinaryFlow997" sourceFlow="OutputFlow831" padIndex="0"/>
+        </binaryFlow>
+        <unaryFlow id="UnaryFlow908" x="266" y="207" hide="false" flow="unaryFlow" op="negate" skin="UnarySkin">
+          <hookup sinkFlow="UnaryFlow908" sourceFlow="BinaryFlow997" padIndex="1"/>
+        </unaryFlow>
+        <outputFlow id="OutputFlow831" x="128" y="531" hide="false" flow="outputFlow" fname="f"/>
+      </map>
+    </flowGroup>
+    <inputsPanel maximised="false">
+      <inputMaker type="randomDecimalSource" skin="RandomDecimalSkin" varName="x" maximum="10"/>
+      <inputMaker type="randomSource" skin="RandomSourceSkin" varName="x" maximum="10"/>
+      <inputMaker type="stepperSource" skin="StepperSourceSkin" varName="x" arg0="0" maximum="10"/>
+      <inputMaker type="dragnDropSource" skin="DragnDropSourceSkin" varName="x"/>
+    </inputsPanel>
+    <outputsPanel maximised="false"/>
+    <mappingBuilder maximised="false">
+      <flowMaker type="binaryFlow" skin="BinarySkin" op="plus"/>
+      <flowMaker type="unaryFlow" skin="UnarySkin" op="negate"/>
+    </mappingBuilder>
+    <plots maximised="false"/>
+    <table maximised="false"/>
+    <runPanel maximised="false"/>
+    <introduction precision="2" rounding="dp" radians="true">
+      <TextFlow whiteSpaceCollapse="preserve" version="2.0.0" xmlns="http://ns.adobe.com/textLayout/2008">
+        <p>
+          <span>Editable Text</span>
+        </p>
+      </TextFlow>
+    </introduction>
+  </flowPanel>
+</numberPlumber>

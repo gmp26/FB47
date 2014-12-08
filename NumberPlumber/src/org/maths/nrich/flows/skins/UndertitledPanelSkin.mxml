@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:parts="org.maths.nrich.flows.skins.parts.*"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 currentState="maximised" >
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColorStroke id="outline" color="0x888888" weight="2"/>
+		<s:SolidColor id="fill" color="0x444444"/>
+		<s:SolidColor id="ioPadColour" />
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="maximised"/>
+		<s:State name="disabled"/>
+	</s:states>
+	
+	<fx:Metadata>
+		[HostComponent('org.maths.nrich.flows.components.TitledPanel')]
+	</fx:Metadata>
+		
+	<s:Rect id="box" radiusX="20" top="7" width="100%" height="100%" stroke="{outline}" fill="{hostComponent.fill}" />	
+
+	<s:VGroup gap="0">
+		
+		<s:Group id="contentGroup" />
+	
+		<s:HGroup id="labelGroup" gap="0" verticalAlign="middle" paddingBottom="5">
+			
+			<s:Group width="20"/>
+			
+			<s:Label id="label" 
+					 text="title" color="0xffffff" backgroundColor="{hostComponent.fill.color}" 
+					 y="0" paddingLeft="5" paddingRight="5" paddingBottom="0"/>
+				
+		</s:HGroup>
+		
+	</s:VGroup>
+	
+	
+</s:Skin>

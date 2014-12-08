@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin">
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			
+			
+			private function addOutput():void 
+			{
+				var anOutput:OutputFlow = new OutputFlow();
+				anOutput.functionName = flowGroup.getUniqueFunctionName(fname.text);
+				anOutput.varNames = Vector.<String>(fvar.text.split(/\s*,\s*/));
+				positionNewOutput(anOutput);
+			}
+			
+			private function get firstOutput():OutputFlow
+			{
+				for(var i:int = 0; i < flowGroup.numElements; i++) {
+					var output:OutputFlow = flowGroup.getElementAt(i) as OutputFlow;
+					if(output) return output;
+				}
+				return null;
+			}
+			
+			private function clearAllOutputs():void 
+			{
+				for(var output:OutputFlow = firstOutput; output = firstOutput;) {
+					
+					// Surgery! disconnect any inputs
+					var pFlows:Vector.<Flow> = output.previousFlows;
+					for(var j:int=0; j < pFlows.length; j++) {
+						var f:Flow = pFlows[j];
+						for(var k:int = 0; k < f.sinks.length; k++) {
+							var sink:Sinker = f.sinks[k];
+							var hookup:SinkSourceLink = sink.attachment;
+							if(hookup.sourceFlow == output) {
+								// Disconnect the sink
+								f.unlink(hookup);
+								f.removeSink(sink);
+							}
+						}
+					}
+					
+					flowGroup.removeElement(output);
+				}			
+			}
+			
+			private function positionNewOutput(output:OutputFlow):void
+			{
+				
+				var xmax:int = 0;
+				var y:int = flowGroup.height - 100;
+				
+				for(var i:int = 0; i < flowGroup.numElements; i++) {
+					var f:Flow = flowGroup.getElementAt(i) as Flow;
+					if(!f || !f.isOutput) continue;
+					
+					xmax = Math.max(xmax, f.x+f.width);
+				}
+				xmax += 10;
+				
+				output.x = xmax;
+				output.y = y;
+				
+				flowGroup.addElement(output);
+				
+			}
+
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+				
+		<components:FlowGroup id="flowGroup"/>
+		
+
+	</fx:Declarations>
+
+	
+	<s:VGroup id="panelContent" paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+		
+		<s:HGroup width="100%">
+			<s:RichText color="0xffffff" fontSize="18" textAlign="left">
+				<s:content>Add outputs</s:content>
+			</s:RichText>
+			<s:Group width="100%"/>
+		</s:HGroup>
+	
+		<s:HGroup width="100%" verticalAlign="top">
+		
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup id="stepper" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:RichText text="Add Results Panel" color="0xffffff"/>
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="function name:" color="white"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="fname" text="f" fontFamily="_serif" fontStyle="italic" fontSize="24" color="0" minWidth="20" 
+												paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4"/>
+						</s:Group>
+					</s:HGroup>
+					<s:HGroup width="100%" verticalAlign="middle">
+						<s:Label text="variable name:" color="white"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="fvar" text="x" fontFamily="_serif" fontStyle="italic" fontSize="24" color="0" minWidth="20" 
+												paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4"/>
+						</s:Group>
+					</s:HGroup>
+					<s:RichText text="Names are editable later" color="0xffffff"/>
+					<s:Button id="addOutputButton" label="Add Output" click="addOutput()"/>
+				</s:VGroup>
+			</s:Group>
+			
+		</s:HGroup>
+		<s:HGroup width="100%">
+			<s:Group width="100%"/>
+			<s:Button id="clearButton" label="Clear All Outputs" click="clearAllOutputs()"/>
+		</s:HGroup>
+	</s:VGroup>
+</components:CollapsiblePanel>

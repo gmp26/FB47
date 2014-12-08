@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/halo"
+		xmlns:parts="org.maths.nrich.dataflow.view.skins.parts.*"
+		creationComplete = "init()"
+		implements="org.maths.nrich.flows.interfaces.ISourceSkin"
+		xmlns:flowparts="org.maths.nrich.dataflow.view.components.flowparts.*" 
+		xmlns:parts1="org.maths.nrich.flows.skins.parts.*"
+		xmlns:sources="org.maths.nrich.flows.skins.sources.*"
+		xmlns:components="org.maths.nrich.flows.components.*"
+		xmlns:vo="org.maths.nrich.flows.model.vo.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			import org.maths.nrich.flows.components.*;
+			import org.maths.nrich.flows.model.vo.*;
+
+			private function init():void
+			{
+				trace("FeedbackSkin init");
+			}
+			
+			public function get padContainer():Group {
+				return padWrapper;
+			}
+						
+			public function get catcher():Catcher
+			{
+				return hostComponent as Catcher;
+			}
+			
+			private function variableChanged():void {
+				inPad.padVariable = variable.text;
+				hostComponent.invalidateProperties();
+			}
+			
+			private var _title:String = "Feedback";
+			[Bindable]
+			public function get title():String
+			{
+				return _title;
+			}
+			public function set title(s:String):void
+			{
+				_title = s;
+			}
+			
+			public function get titleHolder():Label
+			{
+				return label;
+			}
+			
+			
+			
+		]]>
+	</fx:Script>
+
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<s:SolidColorStroke id="outline" color="0x888888" weight="2"/>
+		<s:SolidColor id="fill" color="0x444444"/>
+		<s:SolidColor id="white" color="0xffffff" />
+		<s:SolidColor id="inputFill" color="0xff9900" />
+		<s:SolidColor id="numberPadFill" color="0xff9900" />
+
+		<components:SlimButton id="slimLabel" 
+							   title="{title}" color="0xffffff"
+							   skinClass="org.maths.nrich.flows.skins.SlimButtonSkin"
+							   y="10"  />
+		
+		<vo:InPad id="inPad" />
+
+	</fx:Declarations>
+	
+	<fx:Metadata> 
+		[HostComponent("org.maths.nrich.flows.components.Catcher")] 
+	</fx:Metadata>
+	
+	
+	<s:Group>
+		
+	<s:Rect id="box" radiusX="20" top="7" width="100%" height="100%" stroke="{outline}" fill="{fill}" />
+	
+	<s:VGroup horizontalAlign="center" 
+			  width="100%" height="100%" 
+			  paddingTop="10" paddingBottom="0" paddingLeft="10" paddingRight="10">
+			
+		<s:Label id="label" 
+				 text="{title}" color="0xffffff" 
+				 y="10" paddingLeft="5" paddingRight="5" />
+			
+		<s:Group id="source">
+		<components:DragSpot id="dragSpot" width="15" height="15" x="{border.width/2-5}" y="{border.height}" stroke="{hostComponent.flowStroke}" fill="{hostComponent.flowColour}" />
+		<!--
+		<s:Group id="dragSpot">
+		<s:Ellipse id="marker" width="20" height="20" x="{border.width/2-8}" y="{border.height-5}" stroke="{hostComponent.flowStroke}" fill="{hostComponent.flowColour}" />
+		</s:Group>
+		-->
+
+		<!-- source rectangle -->
+		<s:Group id="sourceArea">
+				
+			<s:Rect id="sourceRect"
+					radiusX="10"
+					width="100%"
+					height="100%"
+					stroke="{hostComponent.flowStroke}"
+					fill="{hostComponent.sourceFill}" />
+	
+			<!-- source contents on top of source -->
+			<s:VGroup id="border"  styleName="sourcePad">					
+							
+				<s:HGroup id="padWrapper" verticalAlign="middle">
+					
+					<s:RichEditableText id="variable" text="{inPad.padVariable}" color="0xffffff" fontSize="24" fontStyle="italic" fontFamily="_serif" change="variableChanged()"/>
+										
+					<s:RichText fontSize="24"  color="0xffffff" >
+						<s:content>
+							<s:span fontFamily="_serif"> =</s:span>
+						</s:content>
+					</s:RichText>
+					
+					<parts1:DropPad id="pad0" numberPadColour="{white}" fontSize="{hostComponent.fontSize}" expression="{hostComponent.arg0}"/>
+					
+					<!-- Spacer required to get the enclosing HGroup width right -->
+					<s:Group  width.normal="0" height.normal="0"/>
+			
+				</s:HGroup>
+				
+				<!-- Spacer required to get the enclosing VGroup height right -->
+				<s:Group  width.normal="0" height.normal="0"/>
+				
+			</s:VGroup>
+			
+		</s:Group>
+	
+	</s:Group>				
+	</s:VGroup>
+		
+	</s:Group>
+</s:Skin>

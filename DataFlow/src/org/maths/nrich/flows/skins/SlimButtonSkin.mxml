@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" 
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 alpha.disabled = "0.5"
+		 >
+	
+	<s:states>
+		<s:State name="over"/>
+		<s:State name="down"/>
+		<s:State name="up"/>
+		<s:State name="disabled"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<s:SolidColor id="buttonColour" color.up="0x666666" color.over="0x888888" color.down="0xcccccc"/>
+	</fx:Declarations>
+
+	<fx:Metadata>
+		[HostComponent('org.maths.nrich.flows.components.SlimButton')]
+	</fx:Metadata>
+	
+	<fx:Script>
+		<![CDATA[
+			[Bindable]
+			public var text:String="label";
+
+/* 			[Bindable]
+			public var downtext:String="Drop";
+
+			[Bindable]
+			public var overtext:String;
+ */			
+		]]>
+	</fx:Script>
+
+	<s:Group>
+		<s:filters>
+			<s:BevelFilter angle="90" blurX="1" blurY="1" distance="1"
+						   highlightColor="0xffffff" highlightAlpha="0.3" shadowColor="0" shadowAlpha="0.8" />
+		</s:filters>
+		<s:Rect radiusX="7" fill="{buttonColour}" width="{dummy.width}" height="100%"/>
+		<s:RichText id="dummy" text="{hostComponent.title}" alpha="0" paddingLeft="10" paddingRight="10"/>
+		<s:RichText id="titleLabel"
+					text.up = "{hostComponent.title}"
+					text.down = "{hostComponent.downtitle}"
+					text.over = "{hostComponent.downtitle}"
+					text.disabled = "{hostComponent.title}"
+					width="{dummy.width}"
+					textAlign="center"
+					color="0xffffff"
+					color.down="0"
+					baseline="10"
+				    y="10"  />
+		
+	</s:Group>
+</s:Skin>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Plots"
+		 addedToStage="init()"
+		 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin" 
+		 >
+
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.skins.CollapsiblePanelSkin;
+			import org.maths.XMLUtilities;
+
+			public static const CLEAR:String = "clear";
+			
+			public var flowGroup:FlowGroup;
+			
+			private function init():void {
+				trace("GraphPanel Init");
+			} 
+			
+			public function toXML():XML {
+				var plot:XML = <plots maximised={currentState=="maximised"}/>;
+				
+				return plot;
+			}
+			
+			public function fromXML(plot:XML):void {
+				
+				if(XMLUtilities.booleanAttr(plot.@maximised, false)) {
+					callLater(expand);
+				}
+				else {
+					callLater(collapse);
+					
+				}				
+			}
+			
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColorStroke id="stroke" weight="3" color="0xff9900" />
+		<s:SolidColor id="fill" color="0xff9900" alpha=".3" />
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColorStroke id="invisible" color="0xffffff" alpha="0" weight="1" />
+	</fx:Declarations>
+
+	<s:VGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15">
+		<mx:PlotChart id="plot" width="100%" height="100%"  >
+			
+			<mx:backgroundElements>
+				<mx:GridLines gridDirection="both" verticalShowOrigin="true" horizontalShowOrigin="true" verticalOriginStroke="{stroke}" horizontalOriginStroke="{stroke}"/>
+			</mx:backgroundElements>
+			
+			<mx:verticalAxis>
+				<mx:LinearAxis id="vaxis" baseAtZero="false" title="output" />
+			</mx:verticalAxis>
+			
+			<mx:horizontalAxis>
+				<mx:LinearAxis id="haxis" baseAtZero="false" title="input"/>
+			</mx:horizontalAxis>
+			
+			<mx:horizontalAxisRenderers> 
+				<mx:AxisRenderer  axisStroke="{invisible}" fontSize="14" color="0xffffff" axis="{haxis}" /> 
+			</mx:horizontalAxisRenderers>
+			
+			<mx:verticalAxisRenderers> 
+				<mx:AxisRenderer  axisStroke="{invisible}" fontSize="14" color="0xffffff" axis="{vaxis}"/> 
+			</mx:verticalAxisRenderers>
+			
+		</mx:PlotChart> 
+
+		<s:HGroup width="100%">
+			<s:Group width="100%"/>
+			<s:Button id="clearButton" label="Clear" click="dispatchEvent(new Event(CLEAR))"/>
+		</s:HGroup>
+	</s:VGroup>
+	
+</components:CollapsiblePanel>

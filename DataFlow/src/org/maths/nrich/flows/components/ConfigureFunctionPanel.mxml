@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+							 addedToStage="setup()"
+							 removedFromStage="tearDown()">
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			public static const FNAME_CHANGE:String = "fname_change";
+						
+			private function setup():void
+			{
+//				functionName = output.functionName;
+//				output.addEventListener(FunctionChange.NEW_NAME, updateFunctionName);
+			}
+			
+			private function tearDown():void 
+			{
+//				output.removeEventListener(FunctionChange.NEW_NAME, updateFunctionName);
+			}
+			
+			[Bindable]
+			private var _functionName:String = "f";
+			
+			[Bindable]
+			public function get functionName():String
+			{
+				return _functionName; 
+			}
+			public function set functionName(name:String):void
+			{
+				_functionName = name;
+				fnameText.invalidateSize();
+			}
+			
+			private function updateFunctionName(event:FunctionChange):void
+			{
+				functionName = event.name;
+			}
+			
+			private function changeFunctionName():void {
+				_functionName = fnameText.text;
+				dispatchEvent(new FunctionChange(FunctionChange.NEW_NAME, _functionName));
+			}
+		]]>
+	</fx:Script>
+	
+	<s:VGroup id="panelContent" paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+
+		<s:RichText color="0xffffff" fontSize="18" textAlign="left">
+			<s:content>Enter an expression</s:content>
+		</s:RichText>
+		
+		<s:HGroup gap="0">
+			
+			<s:Group>
+				<fx:Script>
+					<![CDATA[
+						import org.maths.nrich.flows.events.FunctionChange;
+					]]>
+				</fx:Script>
+				<s:Rect width="100%" height="100%" fill="{white}" />
+				<s:RichEditableText id="fnameText" text="{_functionName}" fontSize="16"
+									paddingLeft="2" paddingRight="2" paddingBottom="2" paddingTop="4"
+								    change="changeFunctionName()"/>
+			</s:Group>
+			<s:RichText fontSize="16" paddingBottom="2" paddingTop="4" color="0xffffff">
+				<s:content>(x) =</s:content>
+			</s:RichText>
+			<s:Group>
+				<s:Rect width="100%" height="100%" fill="{white}" />
+				<s:RichEditableText text="3*x+6" fontSize="16" paddingRight="4" paddingBottom="2" paddingTop="4"/>
+			</s:Group>
+		</s:HGroup>
+		
+		<s:Button id="enterExprButton" label="Enter"/>
+	
+	</s:VGroup>
+
+</components:CollapsiblePanel>

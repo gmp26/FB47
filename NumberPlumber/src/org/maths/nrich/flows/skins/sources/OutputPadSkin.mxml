@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/halo"
+		creationComplete = "init()"
+		implements="org.maths.nrich.flows.interfaces.ISourceSkin"
+		xmlns:parts="org.maths.nrich.flows.skins.parts.*" 
+		xmlns:components="org.maths.nrich.flows.components.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.components.Catcher;
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			
+			import spark.layouts.BasicLayout;
+
+			private function init():void
+			{
+				trace("UnarySkin init");
+			}
+			
+			public function get padContainer():Group {
+				return padWrapper;
+			}
+			
+			public function get catcher():Catcher
+			{
+				return hostComponent as Catcher;
+			}
+			
+		]]>
+	</fx:Script>
+
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+	
+	<fx:Metadata> 
+		[HostComponent("org.maths.nrich.flows.components.Catcher")] 
+	</fx:Metadata>
+	
+	<s:Group id="source" layout="{new BasicLayout()}">
+
+		<!-- source rectangle -->
+		<s:Group id="sourceArea">
+			
+			<s:Rect id="sourceRect"
+					radiusX="10"
+					width="100%"
+					height="100%"
+					stroke="{hostComponent.flowStroke}"
+					fill="{hostComponent.ioPadColour}" />
+
+			<!-- source contents on top of source -->
+			<s:VGroup id="border"  styleName="sourcePad">					
+							
+				<s:HGroup id="padWrapper">
+					
+					
+					<parts:DropPad id="pad0" numberPadColour="{hostComponent.numberPadColour}" fontSize="{hostComponent.fontSize}" expression="{hostComponent.arg0}"/>
+					
+					<!-- Spacer required to get the enclosing HGroup width right -->
+					<s:Group  width.normal="0" height.normal="0"/>
+			
+				</s:HGroup>
+				
+				<!-- Spacer required to get the enclosing VGroup height right -->
+				<s:Group  width.normal="0" height.normal="0"/>
+				
+			</s:VGroup>
+			
+		</s:Group>
+		
+	</s:Group>
+
+</s:Skin>

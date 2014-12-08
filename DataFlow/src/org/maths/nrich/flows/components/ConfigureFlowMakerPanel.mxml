@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+							 addedToStage="setup()"
+							 removedFromStage="tearDown()">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.BinarySkin;
+			import org.maths.nrich.flows.skins.sources.OverSkin;
+			import org.maths.nrich.flows.skins.sources.PostFixSkin;
+			import org.maths.nrich.flows.skins.sources.PowerSkin;
+			import org.maths.nrich.flows.skins.sources.LogSkin;
+			import org.maths.nrich.flows.skins.sources.UnarySkin;
+			private function setup():void 
+			{
+			}
+			
+			private function tearDown():void
+			{
+			}
+			
+ 			public var operationsPanel:FlowMakerPanel;
+			public var flowGroup:FlowGroup;
+			
+			import spark.components.Group;
+			import spark.components.HGroup;
+			
+			[Bindable]
+			private var binops:ArrayCollection = new ArrayCollection([
+				{label:"plus"},
+				{label:"minus"},
+				{label:"divided by"},
+				{label:"times"},
+				{label:"over"},
+				{label:"pow"},
+				{label:"log"}
+			]);
+			
+			[Bindable]
+			private var unops:ArrayCollection = new ArrayCollection([
+				{label:"negate"},
+				{label:"sqrt"},
+				{label:"sqr", postfix:true},
+				{label:"cube", postfix:true},
+				{label:"cbrt"},
+				{label:"abs"},
+				{label:"exp"},
+				{label:"ln"},
+				{label:"sin"},
+				{label:"cos"},
+				{label:"tan"},
+				{label:"asin"},
+				{label:"acos"},
+				{label:"atan"},
+				{label:"sinh"},
+				{label:"cosh"},
+				{label:"tanh"},
+				{label:"asinh"},
+				{label:"acosh"},
+				{label:"atanh"}
+			]);
+			
+			
+			private function addBinop(event:Event):void 
+			{
+				var flow:BinaryFlow = new BinaryFlow();
+
+				flow.setStyle("skinClass", FlowSkin);
+				flow.arg0 = null; //new Expression(stepper0.value);
+				flow.op = op.selectedItem.label;
+				flow.arg1 = null; //new Expression(stepper1.value);
+				switch(flow.op) {
+					case "over":
+						flow.sourceSkin = OverSkin;
+						break;
+					case "pow":
+						flow.sourceSkin = PowerSkin;
+						break;
+					case "log":
+						flow.sourceSkin = LogSkin;
+						break;
+					default:
+						flow.sourceSkin = BinarySkin;
+				}
+				//flow.sourceSkin = flow.op == "over" ? OverSkin : (flow.op == "pow" ? PowerSkin : BinarySkin);
+				if(flow.op == "divided by")
+					flow.op = "over";
+				
+				var flowMaker:FlowMaker = new FlowMaker();
+				flowMaker.flowGroup = flowGroup;
+				flowMaker.flow = flow;
+				flow.mouseChildren = false;
+				
+				operationsPanel.expand();
+				callLater(function():void {operationsPanel.addFlowMaker(flowMaker);})
+
+			}
+			
+			private function addUnary(event:Event):void 
+			{
+				var flow:UnaryFlow = new UnaryFlow();
+				flow.setStyle("skinClass", FlowSkin);
+				flow.arg0 = null; 
+				flow.op = flowGroup.internalOp(unop.selectedItem.label);
+
+				if(unop.selectedItem.postfix)
+					flow.sourceSkin = PostFixSkin;
+				else
+					flow.sourceSkin = UnarySkin;
+				
+				var flowMaker:FlowMaker = new FlowMaker();
+				flowMaker.flowGroup = flowGroup;
+				flowMaker.flow = flow;
+				flow.mouseChildren = false;
+				
+				operationsPanel.expand();
+				callLater(function():void {operationsPanel.addFlowMaker(flowMaker);})
+			}
+			
+			private function clearAllOperations():void
+			{
+				operationsPanel.removeAllFlowMakers();
+				operationsPanel.collapse();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+		
+		
+	</fx:Declarations>
+
+	
+	<s:VGroup id="panelContent" horizontalAlign="right"
+			  paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+		
+		<s:HGroup width="100%" verticalAlign="top">
+		
+			<!-- Binary Functions -->
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup  horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Add Binary Operation" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="op:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:DropDownList id="op" dataProvider="{binops}" selectedIndex="0"/>
+					</s:HGroup>
+					<s:Button id="addBinopButton" label="Add" click="addBinop(event)" />
+				</s:VGroup>
+			</s:Group>
+			
+			<!-- Unary Functions -->
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup  horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Add Unary Operation" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="op:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:DropDownList id="unop" dataProvider="{unops}" selectedIndex="0"/>
+					</s:HGroup>
+					<s:Button id="addUnopButton" label="Add" click="addUnary(event)" />
+				</s:VGroup>
+			</s:Group>
+						
+		</s:HGroup>
+
+		<s:HGroup>
+			<s:Button id="clearButton" label="Clear All" click="clearAllOperations()"/>
+		</s:HGroup>
+		
+	</s:VGroup>
+</components:CollapsiblePanel>

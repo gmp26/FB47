@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{MemoryRegisterSkin}"
+				 arity = "1"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Complex;
+			import org.maths.Expression;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.MemoryRegisterSkin;			
+
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:MemoryRegister = f as MemoryRegister;
+				return (tf
+					&& _padVariable == tf._padVariable);
+			}
+			
+			/**
+			 * Evaluate the sink and drop the result on the next source, but only if this is a first
+			 * step.
+			 */
+			override public function step(afterDrop:Boolean = false):void
+			{
+
+				if(afterDrop)
+					return;
+				var value:Expression = getCompoundExpression();
+				if(!value)
+					return;
+					
+				validateNow();
+				select();
+				
+				var len:int = sinks.length;
+				for(var i:int = 0; i < len; i++) {
+					var sink:Sinker = sinks[i];
+					sink.showValues = showValues;
+					
+					animateStep(sinks[i], value, false, true, true);
+					
+				}
+				
+				invalidateDisplayList();			
+			}
+			
+			/**
+			 * Returns the expression that represents this flow. Sub expressions will represent
+			 * preceding flows. 
+			 * @param substituteVars If substituteVars is true, variables are replaced by their values. 
+			 * @return the resulting compound expression.
+			 * 
+			 */
+			override public function getCompoundExpression(substituteVars:Boolean = false):Expression
+			{				
+				if(arg0 == null)
+					return null;
+				return new Expression(arg0.evaluate(substituteVars));
+			}
+			
+		
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+
+</components:InputFlow>

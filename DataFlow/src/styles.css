@@ -1,0 +1,61 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/halo";
+@namespace components "org.maths.nrich.dataflow.view.components.*";
+@namespace components1 "org.maths.nrich.flows.components.*";
+
+components1|Main
+{
+	color: black;
+	backgroundColor: white;
+	skinClass: ClassReference("spark.skins.spark.PanelSkin");
+}
+
+s|Button {
+	color:#000000;
+	chromeColor:#CCCCFF;
+}
+
+.flow {
+	fontSize: 24;
+	
+	basinFill: #999999;
+	numberPadFill: #DDDDDD;
+	
+	/* flow stroke characteristics */
+	flowColour: #FFFFFF;
+	flowWeight: 4;
+}
+
+.sourcePad {
+	baseColor:#ff9900;
+	left:5;
+	top:5;
+	right:3;
+	bottom:3;
+}
+
+
+.numberPad {
+	baseColor:#ff9900;
+	left:5;
+	top:5;
+	right:5;
+	bottom:3;
+}
+
+.dragNumber {
+	baseColor:#ff9900;
+	left:2;
+	top:2;
+	right:2;
+	bottom:1;
+}
+
+
+.sinkPad {
+	left:5;
+	top:5;
+	right:5;
+	bottom:3;
+}

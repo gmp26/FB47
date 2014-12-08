@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 mouseChildren = "false">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			
+			import org.maths.Expression;
+			import org.maths.XMLUtilities;
+			
+			private var _flow:OutputFlow;
+						
+			[Bindable]
+			public function get flow():OutputFlow
+			{
+				return _flow;
+			}
+			public function set flow(s:OutputFlow):void 
+			{
+				_flow = s;
+				addElement(flow);
+			}
+			
+			[Bindable]
+			public function get sourceSkin():Class
+			{
+				return flow.sourceSkin;
+			}
+			public function set sourceSkin(s:Class):void 
+			{
+				flow.sourceSkin = s;
+			}
+			
+			
+			[Bindable]
+			public function get arg0():Expression
+			{
+				return flow.arg0;
+			}
+			public function set arg0(s:Expression):void 
+			{
+				flow.arg0 = s;
+			}
+			
+/* 			[Bindable]
+			public function get functionName():String
+			{
+				return flow.functionName;
+			}
+			public function set functionName(s:String):void 
+			{
+				flow.functionName = s;
+			}
+			
+			[Bindable]
+			public function get varNames():Vector
+			{
+				return flow.varNames;
+			}
+			public function set varNames(s:Array):void 
+			{
+				flow.varNames = s;
+			}
+ */	
+			
+/* 			public function toXML():XML {
+				var fcn:String = flow.className;
+				fcn = fcn.charAt(0).toLowerCase() + fcn.substr(1);
+				var im:XML = <inputMaker type={fcn} skin={flow.source.skin.className} varName={padVariable}/>;
+				if(arg0)
+					im.@arg0 = arg0.displayString();
+				if(minimum)
+					im.@minimum = minimum.toString();
+				if(maximum)
+					im.@maximum = maximum.toString();
+				
+				return im;
+			}
+			
+			
+			public function fromXML(fm:XML):Boolean {
+				
+				var flowClassName:String = XMLUtilities.stringAttr(fm.@type, "InputFlow");
+				try {
+					var flowClass:Class = getClassByAlias(flowClassName);
+				}
+				catch(e:Error) {
+					Alert.show(flowClassName, "Unknown InputMaker class", Alert.OK);
+					return false;
+				}
+				_flow = new flowClass();
+				
+				var skinName:String = XMLUtilities.stringAttr(fm.@skin, "Skin");
+ 				var skinClass:Class = getClassByAlias(skinName);
+				if(!skinClass) {
+					Alert.show(skinName, "Unknown InputMaker skin", Alert.OK);
+					return false;					
+				}
+				_flow.sourceSkin = skinClass;
+				
+				var arg:String = XMLUtilities.stringAttr(fm.@arg0, null);
+				if(arg) {
+					try {
+						_flow.arg0 = new Expression(arg);
+					}
+					catch (e:Error) {
+						Alert.show(arg, "Bad Expression", Alert.OK);
+						return false;											
+					}
+				}
+				
+				minimum = XMLUtilities.numberAttr(fm.@minimum, 0);
+				maximum = XMLUtilities.numberAttr(fm.@maximum, 0);
+
+				var s:String = XMLUtilities.stringAttr(fm.@varName, null);
+				if(s) {
+					padVariable = s;
+				}
+				
+				addElement(_flow);
+				return true;
+			}
+ */
+		]]>
+	</fx:Script>
+</s:Group>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/halo"
+					   xmlns:view="org.maths.nrich.flows.components.*"
+					   width="100%"
+					   height="100%"
+					   creationComplete="init()"
+					   >
+	<fx:Style source="styles.css"/>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import air.update.ApplicationUpdaterUI;
+			import air.update.events.UpdateEvent;
+			
+			import mx.controls.Alert;
+			private var appUpdater:ApplicationUpdaterUI = new ApplicationUpdaterUI();
+			
+			private function init():void
+			{
+				trace("Current Version is "+applicationVersion);
+				appUpdater.updateURL = "http://nrich.maths.org/DataFlow/update.xml";
+				
+				// Always check for update
+				appUpdater.isCheckForUpdateVisible = false;
+				
+				appUpdater.addEventListener(UpdateEvent.INITIALIZED, onUpdate);
+				appUpdater.addEventListener(ErrorEvent.ERROR, onError);
+				
+				appUpdater.initialize();
+				
+			}
+			
+			private function onUpdate(event:UpdateEvent):void
+			{
+				// Check for an update
+				appUpdater.checkNow();
+			}
+			
+			private function onError(event:ErrorEvent):void
+			{
+				Alert.show(event.toString());
+			}
+			
+			private function get applicationVersion():String
+			{
+				var appXML:XML = NativeApplication.nativeApplication.applicationDescriptor;
+				var ns:Namespace = appXML.namespace();
+				return appXML.ns::version;
+			}
+		]]>
+	</fx:Script>
+	
+	<view:Main id="main" title="Number Plumber" width="100%" height="100%" />
+</s:WindowedApplication>

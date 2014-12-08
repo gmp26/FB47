@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:river="org.maths.nrich.dataflow.view.components.river.*"
+		 xmlns:functions="org.maths.nrich.dataflow.view.skins.functions.*"
+		 xmlns:components="org.maths.nrich.dataflow.view.components.*" 
+		 xmlns:components1="org.maths.nrich.flows.components.*"
+		 skinClass="org.maths.nrich.flows.skins.MainSkin">
+
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+
+	<fx:Script>
+		<![CDATA[			
+			import org.maths.nrich.flows.skins.MainSkin;
+			
+			import spark.components.Button;
+			public static const FULLSCREEN:String = "Full Screen";
+			public static const RELEASESCREEN:String = "Release Screen";
+			
+			[SkinPart(required="true")]
+			public var fullScreenButton:Button;
+			
+			[Bindable]
+			private var fullScreenLabel:String = FULLSCREEN;
+			
+			private function switchFullScreen(event:Event):void {
+				stage.addEventListener(flash.events.FullScreenEvent.FULL_SCREEN, handleFullScreen, false, 0, true);
+				if(stage.displayState==StageDisplayState.NORMAL) {
+					stage.displayState=StageDisplayState.FULL_SCREEN;
+				}
+				else {
+					stage.displayState=StageDisplayState.NORMAL;
+				}
+			}
+			
+			private function handleFullScreen(event:flash.events.FullScreenEvent):void {
+				if(stage.displayState == StageDisplayState.NORMAL) {
+					fullScreenButton.label = FULLSCREEN;
+				}
+				else {
+					fullScreenButton.label = RELEASESCREEN;
+				}
+			}
+			
+			override protected function partAdded(partName:String, instance:Object) : void
+			{
+				super.partAdded(partName, instance);
+				if(instance == fullScreenButton) {
+					fullScreenButton.addEventListener(MouseEvent.CLICK, switchFullScreen);
+				}
+			}
+			
+			override protected function partRemoved(partName:String, instance:Object) : void
+			{
+				super.partRemoved(partName, instance);
+				if(instance == fullScreenButton) {
+					fullScreenButton.removeEventListener(MouseEvent.CLICK, switchFullScreen);
+				}
+			}
+			
+			public function get scrollerHeight():int 
+			{
+				return scroller.height;
+			}
+		]]>
+	</fx:Script>
+	
+	<s:Scroller id="scroller" width="100%" height="100%">
+		<components1:FlowPanel id="flowPanel" x="0" y="0" width="100%" height="100%" />
+	</s:Scroller>
+	
+</s:Panel>

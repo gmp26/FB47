@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" 
+		 xmlns:local="*" xmlns:components="org.maths.nrich.flows.components.*" 
+		 xmlns:parts="org.maths.nrich.flows.skins.parts.*"
+		 width="100%" height="100%" xmlns:skins="org.maths.nrich.flows.skins.*"
+		 addedToStage="setup()"
+		 removedFromStage="tearDown()">
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			
+			import org.maths.Complex;
+			import org.maths.XMLUtilities;
+			
+			import spark.utils.TextFlowUtil;
+			
+			private function setup():void
+			{
+				runPanel.addEventListener(RunPanel.RESET_PADS, resetInputValues);
+				runPanel.addEventListener(RunPanel.STEP_CALCULATION, step);
+				runPanel.addEventListener(RunPanel.SHOW_VALUES_CHANGED, showValuesChanged);
+				flowGroup.addEventListener(FlowGroup.STATUSCHANGE, setStatusText);
+				
+				// load from config file
+				reload();
+			}
+			
+			private function tearDown():void
+			{
+				runPanel.removeEventListener(RunPanel.RESET_PADS, resetInputValues);
+				runPanel.removeEventListener(RunPanel.STEP_CALCULATION, step);
+				runPanel.removeEventListener(RunPanel.SHOW_VALUES_CHANGED, showValuesChanged);
+				flowGroup.removeEventListener(FlowGroup.STATUSCHANGE, setStatusText);
+			}
+			
+			
+			private function resetInputValues(event:Event):void {
+				flowGroup.resetValues();
+			}
+			
+			private function step(event:Event):void {
+				flowGroup.step();
+			}
+			
+			private function showValuesChanged(event:Event):void
+			{
+				flowGroup.showValues = (runPanel.showValues.selectedValue as int);
+			}
+			
+			private var file:FileReference;
+			
+			public function load():void {
+				file = new FileReference();
+				file.addEventListener(Event.CANCEL, cancelBrowse);
+				file.addEventListener(Event.SELECT, loadFileSelected);
+				file.addEventListener(IOErrorEvent.IO_ERROR, browseError);
+				var filter:FileFilter = new FileFilter("Number Plumber Examples", "*.xml");
+				file.browse([filter]);
+			}
+			
+			public function save():void {
+				file = new FileReference();
+				//addListeners();
+				file.addEventListener(Event.CANCEL, cancelBrowse);
+				file.addEventListener(Event.COMPLETE, fileSaved,false,0,true);
+				file.addEventListener(IOErrorEvent.IO_ERROR, browseError);
+				var xml:XML = <numberPlumber/>;
+				xml.appendChild(toXML());
+				file.save(xml, "NumberPlumber.xml");
+			}
+
+			private function removeListeners():void {
+				file.removeEventListener(Event.CANCEL, cancelBrowse);
+				file.removeEventListener(Event.SELECT, loadFileSelected);
+				file.removeEventListener(IOErrorEvent.IO_ERROR, browseError);
+			}
+			
+			private function cancelBrowse(event:Event):void {
+				trace("browse cancelled");
+				removeListeners();
+			}
+			
+			private function browseError(event:IOErrorEvent):void {
+				Alert.show(event.toString(), "Unable to access file", Alert.OK, this);
+				removeListeners();
+			}
+			
+			private function loadFileSelected(event:Event):void {
+				removeListeners();
+				file.addEventListener(Event.COMPLETE, fileLoaded, false, 0, true);
+				file.load();
+			}
+			
+			private function fileLoaded(event:Event):void {
+				removeListeners();
+				file.removeEventListener(Event.COMPLETE, fileLoaded);
+				try {
+					var xml:XML = new XML(file.data.readUTFBytes(file.data.length));
+				}
+				catch (e:Error) {
+					Alert.show(e.message, "Bad File Format", Alert.OK);
+					return;
+				}
+				var numberPlumber:XML = xml.flowPanel[0];
+				if(numberPlumber)
+					fromXML(numberPlumber);
+				else
+					Alert.show("missing <flowPanel>", "Unknown file", Alert.OK);
+			}
+			
+			private function fileSaved(event:Event):void {
+				removeListeners();
+				file.removeEventListener(Event.COMPLETE, fileSaved);			
+			}
+			
+/*------- clear ----------*/
+			public function clear():void
+			{
+				numberPanel.clearAllNumbers();
+				inputsPanel.removeAllInputMakers();
+				inputsPanel.collapse();
+				operationsPanel.removeAllFlowMakers();
+				operationsPanel.collapse();
+				flowGroup.removeAllFlows();
+			}
+			
+/*------- load from URL ----------*/
+			public var configURL:String;
+			
+			private var loader:URLLoader;
+			
+			public function reload():void
+			{
+				// Acquire configURL from flashVar "config" 
+				configURL = FlexGlobals.topLevelApplication.parameters.config;
+				if(!configURL || configURL.match(/^\s*$/))
+					return;
+				
+				trace("configURL = "+configURL);
+				
+				var request:URLRequest = new URLRequest(configURL);
+				if(!loader) {
+					loader = new URLLoader(request);
+					addLoaderListeners();
+				}
+				try {
+					loader.load(request);
+				}
+				catch(e:Error) {
+					Alert.show(e.message, "Error opening "+configURL, Alert.OK);
+				}
+			}
+			
+			private function addLoaderListeners():void {
+				loader.addEventListener(Event.COMPLETE, urlLoaded, false, 0, true);
+				//loader.addEventListener(Event.OPEN, openHandler, false, 0, true);
+				loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler, false, 0, true);
+				loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler, false, 0, true);
+				loader.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler, false, 0, true);
+			}
+			
+			private function urlLoaded(event:Event):void
+			{
+				try {
+					var xml:XML = new XML(loader.data);
+					var numberPlumber:XML = xml.flowPanel[0];
+					if(numberPlumber)
+						fromXML(numberPlumber);
+					else
+						Alert.show("missing <flowPanel>", "Unknown file format", Alert.OK);
+				}
+				catch(e:Error) {
+					Alert.show(e.message+"\n", "Configuration file error", Alert.OK);
+				}
+			}
+
+			private function securityErrorHandler(event:SecurityErrorEvent):void {
+				throw new Error("securityErrorHandler: " + event);
+			}
+			
+			private function httpStatusHandler(event:HTTPStatusEvent):void {
+				//throw new Error("httpStatusHandler: " + event);
+			}
+			
+			private function ioErrorHandler(event:IOErrorEvent):void {
+				throw new Error("ioErrorHandler: " + event);
+			}
+
+/*------- serialisation ----------*/
+			public function toXML():XML {
+				var fp:XML = <flowPanel/>;
+				fp.appendChild(numberPanel.toXML());
+				fp.appendChild(flowGroup.toXML());
+				fp.appendChild(inputsPanel.toXML());
+				fp.appendChild(outputsPanel.toXML());
+				fp.appendChild(operationsPanel.toXML());
+				fp.appendChild(graphPanel.toXML());
+				fp.appendChild(tablePanel.toXML());
+				fp.appendChild(runPanel.toXML());
+				if(sequencePanel.visible)
+					fp.appendChild(sequencePanel.toXML());
+
+				var intro:XML = <introduction precision={Complex.util.figures} rounding={Complex.util.rounding} radians={flowGroup.useRadians} />;
+				var noid:XML = TextFlowUtil.export(editableText.textFlow);
+				noid.@id="";
+				noid = new XML(noid.toXMLString().replace(/id=""/,""));
+				intro.appendChild(noid);
+				fp.appendChild(intro);
+
+				
+				return fp;
+			}
+			
+			public function fromXML(fp:XML):void {
+				var xml:XMLList = fp.numberPanel;
+				if(xml.length() > 0)
+					numberPanel.fromXML(xml[0]);
+
+				xml = fp.flowGroup;
+				if(xml.length() > 0)
+					flowGroup.fromXML(xml[0]);
+
+				// We must setup the trig mode before creating any trig ops
+				var intro:XMLList = fp.introduction;
+				if(intro[0]) {
+					var x:XML = intro[0];
+					flowGroup.useRadians = XMLUtilities.booleanAttr(x.@radians, true);
+					Complex.util.figures = XMLUtilities.intAttr(x.@precision, 3);
+					Complex.util.rounding = XMLUtilities.stringAttr(x.@rounding, "sf");
+					setStatusText();
+					flowGroup.dispatchEvent(new Event(FlowGroup.MODECHANGE));
+					var tf:XML = x.children()[0];
+					editableText.textFlow = TextFlowUtil.importFromXML(tf);
+					//editableText.invalidateProperties();
+				}
+				
+				// This might create some trig ops
+				xml = fp.mappingBuilder;
+				if(xml.length() > 0)
+					operationsPanel.fromXML(xml[0]);
+				
+				xml = fp.inputsPanel;
+				if(xml.length() > 0)
+					inputsPanel.fromXML(xml[0]);
+				
+				xml = fp.outputsPanel;
+				if(xml.length() > 0)
+					outputsPanel.fromXML(xml[0]);
+				
+				xml = fp.runPanel;
+				if(xml.length() > 0)
+					runPanel.fromXML(xml[0]);
+				
+				xml = fp.plots;
+				if(xml.length() > 0)
+					graphPanel.fromXML(xml[0]);
+				
+				xml = fp.table;
+				if(xml.length() > 0)
+					tablePanel.fromXML(xml[0]);
+				
+				xml = fp.sequenceBuilder;
+				if(xml.length() > 0) {
+					sequencePanel.visible = true;
+					sequencePanel.fromXML(xml[0]);
+				}
+				
+
+				
+			}
+			[Bindable]
+			public var statusText:String = "Display precision 3 sf; Using radians";
+			
+			public function setStatusText(event:Event = null):void 
+			{
+				statusText = "Display precision "+Complex.util.figures + " " + Complex.util.rounding 
+					+ "; Using " + (flowGroup.useRadians ? "radians" : "degrees");
+			}
+			
+/* 			[Bindable]
+			public var introduction:TextFlow = new TextFlow();
+ */	
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="inFill" color = "0x333333"/>
+		<s:SolidColorStroke id="outline" color="0x888888" weight="2"/>
+		<s:SolidColor id="ioPadColour" color="0xff9900" />
+		
+		<s:TextFlow id="introduction">
+			<s:p>Editable Text</s:p>
+		</s:TextFlow>
+		
+		<s:ArrayCollection id="tableData"/>
+		
+	</fx:Declarations>
+	
+	<s:Rect width="{contentWrapper.contentWidth}" height="{contentWrapper.contentHeight}">
+		<s:fill>
+			<s:SolidColor color="0x444444"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Group id="contentWrapper" width="100%" height="100%">
+		
+		<s:VGroup bottom="5" left="5">
+			<!-- Explanatory text -->
+			<s:RichEditableText id="editableText" color="0x888888" fontSize="18">
+				{introduction}
+			</s:RichEditableText>
+				
+			<!-- Status bar -->
+			<s:RichText text="{statusText}" color="0x888888" fontSize="12"/>
+		</s:VGroup>
+
+		<!-- fixed panels -->
+		<s:VGroup top="5" left="10" gap="10">
+			<components:DropNumberPanel 
+				id="numberPanel"
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}" 
+				width="{contentWrapper.width * 0.6}"/>
+		</s:VGroup>
+		
+	
+		<!-- top right collapsible panel menu -->
+		<s:VGroup top="5" right="5" height="100%" horizontalAlign="right">
+			<components:InputsPanel 
+				id="inputsPanel" 
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+				verticalCenter="-100"
+				numberPanel = "{numberPanel}"
+				/>
+			
+			<components:FlowMakerPanel 
+				id="operationsPanel"
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+			 	verticalCenter="-100"/>
+			
+			<components:OutputsPanel
+				id="outputsPanel"
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+			 	verticalCenter="-100"/>
+				
+			<components:SequencePanel 
+				id="sequencePanel" 
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+				currentState="maximised"
+				verticalCenter="-100"
+				visible = "false"
+				/>
+			
+			<components:GraphPanel
+				id="graphPanel"
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+				currentState="normal"
+				verticalCenter="-100"/>
+			
+			<components:TablePanel
+				id="tablePanel"
+				outline="{outline}"
+				flowGroup = "{flowGroup}"
+				dataProvider = "{tableData}"
+				ioPadColour="{ioPadColour}"
+				right="5"
+				currentState="normal"
+				verticalCenter="-100"/>
+			
+			<components:RunPanel id="runPanel" outline="{outline}" flowGroup="{flowGroup}" ioPadColour="{ioPadColour}"/>
+			
+			<s:Group height="100%"/>
+			
+			<components:LoginPanel id="loginPanel" title="Example Builder" outline="{outline}" fill="{inFill}"
+								   flowPanel="{this}"
+								   flowGroup="{flowGroup}"
+								   operationsPanel="{operationsPanel}"
+								   sequencePanel="{sequencePanel}"
+								   inputsPanel="{inputsPanel}"
+								   numberPanel="{numberPanel}" password=""
+								   />
+			
+			<s:Group height="5"/>
+		</s:VGroup>
+		
+		<components:FlowGroup id="flowGroup" 
+							  graphPanel="{graphPanel}"
+							  tablePanel="{tablePanel}"
+							  tableData="{tableData}"
+							  operationsPanel = "{operationsPanel}"
+							  ioPadColour="{ioPadColour}" width="100%" height="100%"  />
+		
+	</s:Group>
+</s:Group>

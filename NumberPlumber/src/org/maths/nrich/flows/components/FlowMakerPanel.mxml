@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Operations"
+		 addedToStage="init()"
+		 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+		 >
+
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.skins.CollapsiblePanelSkin;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.XMLUtilities;
+			public var flowGroup:FlowGroup;
+			
+			public static const FLOWMAKERS_LOADED:String = "flowmakersLoaded";
+			
+			private function init():void {
+				trace("DragOperationsPanel Init");
+				
+//				flowGroup.addEventListener(FlowGroup.FLOW_CREATE_DELETE, flowCreateDelete); 
+			} 
+			
+/* 			private function flowCreateDelete(event:Event):void {
+				clearButton.enabled = flowGroup.getFlowList().length > 0;
+			}
+ */			
+			public function addFlowMaker(flowMaker:FlowMaker):void 
+			{
+				// Prevent duplication
+				for(var i:int = 0; i < opGroup.numElements; i++) {
+					var fm:FlowMaker = opGroup.getElementAt(i) as FlowMaker;
+					if(fm && fm.op == flowMaker.op)
+						opGroup.removeElement(fm);
+				}
+				
+				opGroup.addElement(flowMaker);
+				
+				//NB We don't want the flow in the flowPanel to respond to mouseEvents.
+				//Instead, we'll make a new flow with the correct flowGroup parentage when
+				//we click on it.
+				flowMaker.mouseChildren = false;
+				flowMaker.addEventListener(MouseEvent.MOUSE_DOWN, createFlow);
+			}
+			
+			public function get flowMakers():Vector.<FlowMaker>
+			{
+				var list:Vector.<FlowMaker> = new Vector.<FlowMaker>;
+				
+				for(var i:int = 0; i < opGroup.numElements; i++) {
+					var fm:FlowMaker = opGroup.getElementAt(i) as FlowMaker;
+					if(fm)
+						list.push(fm);
+				}
+				
+				return list;
+			}
+			
+			public function removeAllFlowMakers():void {
+				var makers:Vector.<FlowMaker> = flowMakers;
+				while(makers.length > 0)
+					removeFlowMaker(makers.pop());
+			}
+			
+			public function removeFlowMaker(flowMaker:FlowMaker):void {
+				opGroup.removeElement(flowMaker);
+			}
+			
+			private var flow:Flow;
+			
+			private function createFlow(event:MouseEvent):void 
+			{
+				
+				var flowMaker:FlowMaker = event.currentTarget as FlowMaker;
+				flow = flowMaker.getInstance();  // new Flow();
+
+/* 				var b:BlurFilter = new BlurFilter(20,20);
+				flow.filters = [
+					b
+				];
+ */				
+				flow.setStyle("skinClass", FlowSkin);
+				flow.sourceSkin = flowMaker.sourceSkin;
+				flowGroup.addElement(flow);
+				
+				var p:Point = opGroup.localToGlobal(new Point(flowMaker.x, flowMaker.y));
+				p = flowGroup.globalToLocal(p);
+				flow.x = p.x;
+				flow.y = p.y;
+				
+				flow.arg0 = flowMaker.arg0;
+				flow.arg1 = flowMaker.arg1;
+				flow.op = flowMaker.op;
+				
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.startDrag();
+				
+//				clearButton.enabled = true;
+				
+			}
+			
+			private function startDragging(event:MouseEvent = null):void 
+			{
+				var flowMaker:FlowMaker = event.currentTarget as FlowMaker;
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.removeEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				flow.startDrag();
+			}
+			
+			private function stopDragging(event:MouseEvent):void
+			{
+				flow.stopDrag();
+				flow.removeEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				
+				
+				var target:FlowPanel = flow.dropTarget.parent as FlowPanel;
+				
+				if(!target) {
+					trace("target=",flow.dropTarget);
+					trace("removing new flow");
+					flowGroup.removeElement(flow);
+					flow = null;
+				}
+				
+			}
+			
+/* 			private function clearAll():void
+			{
+				var list:Vector.<Flow> = flowGroup.getFlowList();
+				for(var i:int = 0; i < list.length; i++) {
+					list[i].removeMe();
+				}
+				
+				clearButton.enabled = false;
+			}
+ */			
+			public function toXML():XML {
+				var mb:XML = <mappingBuilder maximised={currentState=="maximised"}/>;
+				
+				var fmList:Vector.<FlowMaker> = flowMakers;
+				for(var i:int = 0; i < fmList.length; i++) {
+					mb.appendChild(fmList[i].toXML());
+				}
+				
+				return mb;
+			}
+			
+			public function fromXML(mb:XML):void {
+				
+				var fmList:Vector.<FlowMaker> = flowMakers;
+				
+				// remove any existing FlowMakers
+				while(fmList.length > 0) {
+					removeFlowMaker(fmList.pop());
+				}
+				
+				// add new FlowMakers
+				var list:XMLList = mb.flowMaker;
+				for(var i:int=0; i < list.length(); i++) {
+					var fmXML:XML = list[i];
+					var flowMaker:FlowMaker = new FlowMaker();
+					flowMaker.flowGroup = flowGroup;
+					if(flowMaker.fromXML(fmXML))
+						addFlowMaker(flowMaker);
+					else
+						break;
+				}
+
+				if(XMLUtilities.booleanAttr(mb.@maximised, false)) {
+					callLater(expand);
+				}
+				else {
+					callLater(collapse);
+	
+				}
+
+				dispatchEvent(new Event(FLOWMAKERS_LOADED));
+			}
+			
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+	</fx:Declarations>
+
+	<s:VGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15">
+		<s:Group id="opGroup" >
+			<s:layout>
+				<s:TileLayout horizontalGap="0" verticalGap="0"/>
+			</s:layout>
+		</s:Group>
+<!--		<s:HGroup width="100%">
+			<s:Group width="100%"/>
+			<s:Button id="clearButton" label="Clear All" click="clearAll()" enabled="false"/>
+		</s:HGroup>
+-->
+	</s:VGroup>
+	
+</components:CollapsiblePanel>

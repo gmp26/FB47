@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 width="20" height="20"
+		 >
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="fill" color="0xffffff"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.greensock.TweenMax;
+			import com.greensock.easing.Circ;
+			
+			import org.maths.Expression;
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			
+			public var path:Array;
+			public var parentFlow:Flow;
+			public var sink:Sinker;
+			public var tween:TweenMax;
+			public var value:Expression;
+			public var duration:Number = 1;
+			
+			private static var count:int = 0;
+			
+			public function drop():void {
+
+				trace(parentFlow.name, "dropping",name);
+				if(value == null)
+					trace("NULL VALUE DROPPED");
+				tween = TweenMax.to(this, duration, 
+					{
+						repeat:0,
+						delay:0.5,
+						bezier: path,
+						orientToBezier:false,
+						ease:Circ.easeInOut,
+						onComplete:dropped
+					});
+			}
+			
+			private function dropped():void {
+				sink.expression = value;
+
+				trace("Dropped:", parentFlow.name);
+				
+				var hookup:SinkSourceLink = sink.attachment;
+				var targetFlow:Flow = sink.attachment.sourceFlow;
+				if(hookup.pad == targetFlow.source.pad0)
+					targetFlow.arg0 = value;
+				else
+					targetFlow.arg1 = value;
+				
+				
+				if(value == null)
+					trace("NULL VALUE DROPPED");
+				parentFlow.removeMarble(this);
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:Ellipse x="-10" y="-10"  width="100%" height="100%" fill="{fill}"/>
+</s:Group>

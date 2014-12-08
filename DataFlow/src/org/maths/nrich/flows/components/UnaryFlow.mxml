@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:Flow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{UnarySkin}"
+				 arity = "1"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.PostFixSkin;
+			import org.maths.nrich.flows.skins.sources.UnarySkin;
+			
+			override public function resetForStep():void
+			{
+				var feeds:Object = padFeeds;
+				arg0Ready = (feeds.pad0 == null);
+			}
+			
+			// Mark the binary flows arguments
+			override public function preStepCheck():Boolean {
+				return arg0Ready && arg0;		
+			}
+			
+			override public function toXML():XML {
+				
+				var uf:XML = super.toXML();
+				uf.setName("unaryFlow");
+				
+				uf.@skin = "UnarySkin";
+				if(sourceSkin == PostFixSkin)
+					uf.@skin = "PostFixSkin";
+				
+				return uf;
+			}
+			
+			/*
+			override public function fromXML(uf:XML):void {				
+				super.fromXML(uf);
+			}
+			*/
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+
+</components:Flow>

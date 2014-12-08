@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:Flow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{UnaryMapSkin}"
+				 arity = "1"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.MapDef;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.UnaryMapSkin;
+			
+			override public function resetForStep():void
+			{
+				var feeds:Object = padFeeds;
+				arg0Ready = (feeds.pad0 == null);
+			}
+			
+			// Mark the binary flows arguments
+			override public function preStepCheck():Boolean {
+				return arg0Ready && arg0;		
+			}
+			
+			override public function toXML():XML {
+				
+				var um:XML = super.toXML();
+				um.setName("unaryMap");
+				
+/* 				var mapDef:MapDef = Expression.getMapDef(op);
+				if(mapDef) {
+					var md:XML = mapDef.toXML();
+					um.appendChild(md);
+				}
+ */				
+				return um;
+			}
+			
+			
+/* 			override public function fromXML(um:XML):void {				
+				super.fromXML(um);
+				
+				var mdList:XMLList = um.mapDef;
+				if(mdList.length() <= 0) return;
+				var md:MapDef = new MapDef(op);
+				md.fromXML(mdList[0]);
+				Expression.setMapDef(md);
+			}
+ */			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+
+</components:Flow>

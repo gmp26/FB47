@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:RichText xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:mx="library://ns.adobe.com/flex/halo"
+			implements="org.maths.nrich.flows.interfaces.IOp">
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.interfaces.IOp;
+			
+			private const opViewMap:Object = {
+				plus:"+",
+				minus:"-",
+				times:"×",
+				over:"÷",
+				pow:"^",
+				negate:"-",
+				sqrt:"√",
+				sqr:"2",
+				cbrt:"³√",
+				cube:"3",
+				sind:"sin",
+				asind:"asin",
+				cosd:"cos",
+				acosd:"acos",
+				tand:"tan",
+				atand:"atan"
+			}
+			
+			public function set opText(s:String):void
+			{
+				text = opViewMap[s];
+				if(text == "")
+					text = s;
+				invalidateProperties();
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</s:RichText>

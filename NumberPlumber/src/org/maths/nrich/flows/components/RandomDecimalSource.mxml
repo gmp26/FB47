@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{RandomDecimalSkin}"
+				 isInput = "true"
+				 arity="1"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.RandomDecimalSkin;			
+		
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:RandomDecimalSource = f as RandomDecimalSource;
+				return (tf
+					&& _padVariable == tf._padVariable
+					&& _minimum == tf._minimum
+					&& _maximum == tf._maximum);
+			}
+			
+			/**
+			 * Generate a new random integer and drop it
+			 */
+			override public function step(afterDrop:Boolean = false):void
+			{
+				var r:String = ((maximum - minimum)*Math.random() + minimum).toPrecision(2);
+				var value:Expression = new Expression(r);
+				arg0 = value;
+				
+				if(!value)
+					return;
+				
+				validateNow();
+				select();
+				
+				var len:int = sinks.length;
+				for(var i:int = 0; i < len; i++) {
+					var sink:Sinker = sinks[i];
+					sink.showValues = showValues;
+					animateStep(sinks[i], value, false, true, true);
+				}
+				
+				invalidateDisplayList();			
+			}
+
+			override public function toXML():XML {
+				
+				var xml:XML = super.toXML();
+				xml.@flow = "randomDecimalSource";
+				
+				return xml;
+			}
+			
+		
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</components:InputFlow>

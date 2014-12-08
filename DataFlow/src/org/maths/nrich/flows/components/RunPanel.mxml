@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:parts="org.maths.nrich.flows.skins.parts.*"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Run Panel"
+		 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin">
+
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.skins.CollapsiblePanelSkin;
+			import org.maths.XMLUtilities;
+
+			static public const RESET_PADS:String ="resetPads";
+			static public const STEP_CALCULATION:String ="stepCalc";
+			static public const RUN_CALCULATION:String ="runCalc";
+			static public const PAUSE_CALCULATION:String ="pauseCalc";
+			static public const SHOW_VALUES_CHANGED:String = "ShowValuesChanged";
+			
+			static public const SHOWVALUES:int = 0; 
+			static public const SHOWWORKING:int = 1; 
+			static public const SHOWEXPRESSIONS:int = 2; 
+			
+			public var flowGroup:FlowGroup;
+			
+			[Bindable]
+			public var stroke:SolidColorStroke;
+			
+			[Bindable]
+			public var running:Boolean = false;
+			
+			[Bindable]
+			public var runnable:Boolean = false;
+			
+			private function reset(event:Event):void {
+				dispatchEvent(new Event(RESET_PADS));
+			}
+			
+			private function step(event:Event):void {
+				speedSlider.setFocus();
+				dispatchEvent(new Event(STEP_CALCULATION));
+			}
+			
+			private function runPause(event:Event):void {
+				if(running)
+					dispatchEvent(new Event(PAUSE_CALCULATION));
+				else
+					dispatchEvent(new Event(RUN_CALCULATION));
+			}
+			
+			private function speedChange():void 
+			{
+				flowGroup.dropTime = Math.pow(2, 1-2*speedSlider.value);
+			}
+
+			public function toXML():XML {
+				var rp:XML = <runPanel maximised={currentState=="maximised"}/>;
+				
+				return rp;
+			}
+			
+			public function fromXML(rp:XML):void {
+				
+				if(XMLUtilities.booleanAttr(rp.@maximised, false)) {
+					callLater(expand);
+				}
+				else {
+					callLater(collapse);
+					
+				}				
+			}
+
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:RadioButtonGroup id="showValues" change="dispatchEvent(new Event(SHOW_VALUES_CHANGED))" />
+	</fx:Declarations>
+	
+	<s:VGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+	
+<!--		<components:RunPanel id="runPanel" top="5" right="15" bottom="5" stroke="{outline}" />
+-->
+		<s:Button id="resetButton" label="Reset"  click="reset(event)"/>
+		<s:Button id="runButton" label="Run"  click="step(event)"/>
+		<!--<s:Label text="Pause with spacebar" color="0xffffff"/>-->
+		<s:Group height="10"/>
+		<s:Label text="Speed:" color="0xffffff"/>
+		<s:HSlider id="speedSlider" width="70" value="0.5" minimum="0" maximum="1" snapInterval="0.1" stepSize="0.1" change="speedChange()"/>
+		
+		<s:RadioButton group="{showValues}" label="show results" color="0xffffff" value="{SHOWVALUES}" selected="true"/>
+		<s:RadioButton group="{showValues}" label="show working" color="0xffffff" value="{SHOWWORKING}"/>
+		<!--<s:RadioButton group="{showValues}" label="show expressions" color="0xffffff" value="{SHOWEXPRESSIONS}"/>-->
+
+	</s:VGroup>	
+
+</components:CollapsiblePanel>

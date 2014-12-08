@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 implements="org.maths.nrich.flows.interfaces.IPad">
+	
+	<fx:Declarations>
+		<s:SolidColor id="numberPadFill" />
+		<fx:int id="fontSize"/>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.BasicStateImpl;
+			import org.maths.Expression;
+			import org.maths.IState;
+			
+			private var _expression:Expression;
+			[Bindable]
+			public function get expression():Expression
+			{
+				return _expression;
+			}
+			public function set expression(s:Expression):void
+			{
+				var state:IState = new BasicStateImpl();
+				_expression = s;
+				invalidateProperties();
+			}
+			
+			[Bindable]
+			public var displayText:String = "";
+			
+			private var _showValues:int = 0;
+			public function get showValues():int
+			{
+				return _showValues;
+			}
+			public function set showValues(value:int):void
+			{
+				_showValues = value;
+				invalidateProperties();
+			}
+						
+			override protected function commitProperties() : void
+			{
+				super.commitProperties();
+	
+				displayText = expression ? expression.displayString() : "";
+
+			}			
+		]]>
+	</fx:Script>
+	
+	
+	<s:Rect  id="pad0Drop" radiusX="5" width="100%" height="100%" fill="{numberPadFill}" />
+	
+	<s:HGroup styleName="dragNumber" minWidth="15" minHeight="20">	
+		<s:RichText color="#000000" fontFamily="Arial" fontSize="{fontSize}" id="arg" text="{displayText}"/>
+	</s:HGroup>
+		
+
+</s:Group>

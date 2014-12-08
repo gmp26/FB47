@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Outputs"
+		 addedToStage="setup()"
+		 removedFromStage="tearDown()"
+		 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+		 >
+
+	<fx:Script>
+		<![CDATA[
+			import com.greensock.TweenLite;
+			
+			import org.maths.XMLUtilities;
+			import org.maths.nrich.flows.skins.CollapsiblePanelSkin;
+			import mx.core.UIComponent;
+			
+			public var flowGroup:FlowGroup;
+			
+			private var flow:OutputFlow;
+			
+			private function setup():void {
+				outputMaker.addEventListener(MouseEvent.MOUSE_DOWN, createFlow);
+			}
+			
+			private function tearDown():void 
+			{
+				outputMaker.removeEventListener(MouseEvent.MOUSE_DOWN, createFlow);
+			}
+			
+			public function addOutputMaker(outputMaker:OutputMaker):void 
+			{
+				outGroup.addElement(outputMaker);
+				
+				//NB We don't want the flow in the flowPanel to respond to mouseEvents.
+				//Instead, we'll make a new flow with the correct flowGroup parentage when
+				//we click on it.
+				outputMaker.mouseChildren = false;
+				outputMaker.addEventListener(MouseEvent.MOUSE_DOWN, createFlow);
+			}
+			
+			public function get outputMakers():Vector.<OutputMaker>
+			{
+				var list:Vector.<OutputMaker> = new Vector.<OutputMaker>;
+				
+				for(var i:int = 0; i < outGroup.numElements; i++) {
+					var fm:OutputMaker = outGroup.getElementAt(i) as OutputMaker;
+					if(fm)
+						list.push(fm);
+				}
+				
+				return list;
+			}
+
+/* 			public function removeAllOutputMakers():void {
+				var makers:Vector.<OutputMaker> = outputMakers;
+				while(makers.length > 0)
+					removeOutputMaker(makers.pop());
+			}
+			
+			public function removeOutputMaker(outputMaker:OutputMaker):void {
+				outGroup.removeElement(outputMaker);
+			}
+ */	
+			private function createFlow(event:MouseEvent):void 
+			{
+				
+				var outputMaker:OutputMaker = event.currentTarget as OutputMaker;
+				var fName:String = flowGroup.getUniqueFunctionName(outputMaker.flow.functionName);
+				flow = new OutputFlow();
+				callLater(function():void {
+					flow.functionName = fName;
+					flow.tableData = flowGroup.tableData;
+					outputMaker.flow.functionName = flowGroup.getUniqueFunctionName(fName);
+				});
+
+/* 				var b:BlurFilter = new BlurFilter(20,20);
+				flow.filters = [
+					b
+				];
+ */				
+
+				flowGroup.addElement(flow);
+				
+				var p:Point = outGroup.localToGlobal(new Point(outputMaker.x, outputMaker.y));
+				p = flowGroup.globalToLocal(p);
+				flow.x = p.x;
+				flow.y = p.y;
+				
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.startDrag();
+				
+			}
+			
+			private function startDragging(event:MouseEvent = null):void 
+			{
+				var outputMaker:OutputMaker = event.currentTarget as OutputMaker;
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.removeEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				flow.startDrag();
+			}
+			
+			private function stopDragging(event:MouseEvent):void
+			{
+				flow.stopDrag();
+				flow.removeEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				
+				
+				var target:FlowPanel = flow.dropTarget.parent as FlowPanel;
+				
+				if(!target) {
+					flowGroup.removeElement(flow);
+					flow = null;
+				}
+				else {
+					TweenLite.to(flow, 1, {y: document.screen.height - this.height - 10});
+				}
+			
+			}
+			
+			
+			public function toXML():XML {
+				var ip:XML = <outputsPanel maximised={currentState=="maximised"}/>;
+				
+				return ip;
+			}
+			
+			public function fromXML(ip:XML):void {
+
+				if(XMLUtilities.booleanAttr(ip.@maximised, false)) {
+					callLater(expand);
+				}
+				else {
+					callLater(collapse);
+				}
+				
+			}
+
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+	</fx:Declarations>
+	
+	<s:VGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15">
+		<s:RichText text="Drag to stage" color="0xffffff" fontFamily="_sans" fontSize="14"/>
+		<s:Group id="outGroup">
+			<components:OutputMaker id="outputMaker" flow="{new OutputFlow()}" />
+		</s:Group>
+	</s:VGroup>
+	
+</components:CollapsiblePanel>

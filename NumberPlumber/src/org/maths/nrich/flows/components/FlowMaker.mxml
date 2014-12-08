@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			
+			import org.maths.Expression;
+			import org.maths.MapDef;
+			import org.maths.XMLUtilities;
+			
+			private var _flow:Flow;
+			
+			public var flowGroup:FlowGroup;
+			
+			public function getInstance():Flow 
+			{
+				var cname:String = flow.className;
+				cname = cname.substr(0,1).toLowerCase() + cname.substr(1);
+				var flowClass:Class = getClassByAlias(cname);
+				var flow:Flow = new flowClass() as Flow;
+				return flow;
+			}
+			
+			[Bindable]
+			public function get flow():Flow
+			{
+				return _flow;
+			}
+			public function set flow(s:Flow):void 
+			{
+				_flow = s;
+				addElement(flow);
+			}
+			
+			[Bindable]
+			public function get sourceSkin():Class
+			{
+				return flow.sourceSkin;
+			}
+			public function set sourceSkin(s:Class):void 
+			{
+				flow.sourceSkin = s;
+			}
+			
+			[Bindable]
+			private var skinName:String;
+			
+			
+			[Bindable]
+			public function get arg0():Expression
+			{
+				return flow.arg0;
+			}
+			public function set arg0(s:Expression):void 
+			{
+				flow.arg0 = s;
+			}
+			
+			
+			[Bindable]
+			public function get arg1():Expression
+			{
+				return flow.arg1;
+			}
+			public function set arg1(s:Expression):void 
+			{
+				flow.arg1 = s;
+			}
+			
+			
+			[Bindable]
+			public function get op():String
+			{
+				return flow.op;
+			}
+			public function set op(s:String):void 
+			{
+				//flow.op = s;
+				flow.op = flowGroup.internalOp(s);
+			}
+			
+			public function toXML():XML {
+				var fcn:String = flow.className;
+				fcn = fcn.charAt(0).toLowerCase() + fcn.substr(1);
+				//trace("FlowMaker op="+op+" classname="+flow.source.skin.className);
+				var mb:XML = <flowMaker type={fcn} skin={flow.source.skin.className} op={op}/>;
+				if(arg0)
+					mb.@arg0 = arg0.displayString();
+				if(arg1)
+					mb.@arg0 = arg1.displayString();
+
+				var mapDef:MapDef = Expression.getMapDef(op);
+				if(mapDef) {
+					var md:XML = mapDef.toXML();
+					mb.appendChild(md);
+				}
+				
+				return mb;
+			}
+			
+			
+			public function fromXML(fm:XML):Boolean {
+				
+				var flowClassName:String = XMLUtilities.stringAttr(fm.@type, "Flow");
+				try {
+					var flowClass:Class = getClassByAlias(flowClassName);
+				}
+				catch(e:Error) {
+					Alert.show(flowClassName, "Unknown FlowMaker class", Alert.OK);
+					return false;
+				}
+				_flow = new flowClass();
+				
+				skinName = XMLUtilities.stringAttr(fm.@skin, "Skin");
+				trace("skinName = "+skinName);
+ 				var skinClass:Class = getClassByAlias(skinName);
+				if(!skinClass) {
+					Alert.show(skinName, "Unknown FlowMaker skin", Alert.OK);
+					return false;					
+				}
+				_flow.sourceSkin = skinClass;
+				
+				var arg:String = XMLUtilities.stringAttr(fm.@arg0, null);
+				if(arg) {
+					try {
+						_flow.arg0 = new Expression(arg);
+					}
+					catch (e:Error) {
+						Alert.show(arg, "Bad Expression", Alert.OK);
+						return false;											
+					}
+				}
+				
+				arg = XMLUtilities.stringAttr(fm.@arg1, null);
+				if(arg) {
+					try {
+						_flow.arg1 = new Expression(arg);
+					}
+					catch (e:Error) {
+						Alert.show(arg, "Bad Expression", Alert.OK);
+						return false;											
+					}
+				}
+				
+				var op:String = XMLUtilities.stringAttr(fm.@op, null);
+				if(op) {
+					_flow.op = op;
+
+					var mdList:XMLList = fm.mapDef;
+					if(mdList.length() == 1) {
+						var md:MapDef = new MapDef(op);
+						md.fromXML(mdList[0]);
+						Expression.setMapDef(md);
+					}
+				}
+				
+				addElement(_flow);
+				return true;
+			}
+
+		]]>
+	</fx:Script>
+</s:Group>

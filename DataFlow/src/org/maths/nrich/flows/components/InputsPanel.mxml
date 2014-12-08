@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Inputs"
+		 addedToStage="init()"
+		 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+		 >
+
+	<fx:Script>
+		<![CDATA[
+			import com.greensock.*;
+			
+			import org.maths.XMLUtilities;
+			import org.maths.nrich.flows.skins.CollapsiblePanelSkin;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			
+			public var flowGroup:FlowGroup;
+			public var numberPanel:DropNumberPanel;
+			
+			[Bindable]
+			public var numInputMakers:int = 0;
+			
+			private function init():void {
+				trace("InputsPanel Init");
+			} 
+			
+			public function addInputMaker(inputMaker:InputMaker):void 
+			{
+				// Prevent duplication
+				var makers:Vector.<InputMaker> = inputMakers;
+				for(var i:int = 0; i < makers.length; i++) {
+					if(inputMaker.duplicates(makers[i]))
+						return;
+				}
+				
+				inpGroup.addElement(inputMaker);
+				
+				//NB We don't want the flow in the flowPanel to respond to mouseEvents.
+				//Instead, we'll make a new flow with the correct flowGroup parentage when
+				//we click on it.
+				inputMaker.mouseChildren = false;
+				inputMaker.addEventListener(MouseEvent.MOUSE_DOWN, createFlow);
+				numInputMakers++;
+			}
+			
+			public function get inputMakers():Vector.<InputMaker>
+			{
+				var list:Vector.<InputMaker> = new Vector.<InputMaker>;
+				
+				for(var i:int = 0; i < inpGroup.numElements; i++) {
+					var fm:InputMaker = inpGroup.getElementAt(i) as InputMaker;
+					if(fm)
+						list.push(fm);
+				}
+				
+				return list;
+			}
+
+			public function removeAllInputMakers():void {
+				var makers:Vector.<InputMaker> = inputMakers;
+				while(makers.length > 0)
+					removeInputMaker(makers.pop());
+				numInputMakers = 0;
+			}
+			
+			public function removeInputMaker(inputMaker:InputMaker):void {
+				inpGroup.removeElement(inputMaker);
+			}
+			
+			private var flow:InputFlow;
+			
+			private function createFlow(event:MouseEvent):void 
+			{
+				
+				var inputMaker:InputMaker = event.currentTarget as InputMaker;
+				flow = inputMaker.getInstance();
+
+/* 				var b:BlurFilter = new BlurFilter(20,20);
+				flow.filters = [
+					b
+				];
+ */				
+				flow.setStyle("skinClass", FlowSkin);
+				flow.sourceSkin = inputMaker.sourceSkin;
+				flow.arg0 = inputMaker.arg0;
+				flow.minimum = inputMaker.minimum;
+				flow.maximum = inputMaker.maximum;
+				flow.padVariable = inputMaker.padVariable;
+				flowGroup.addElement(flow);
+				
+				var p:Point = inpGroup.localToGlobal(new Point(inputMaker.x, inputMaker.y));
+				p = flowGroup.globalToLocal(p);
+				flow.x = p.x;
+				flow.y = p.y;
+				
+				
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.startDrag();
+				
+			}
+			
+			private function startDragging(event:MouseEvent = null):void 
+			{
+				var inputMaker:InputMaker = event.currentTarget as InputMaker;
+				flow.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				flow.removeEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				flow.startDrag();
+			}
+			
+			private function stopDragging(event:MouseEvent):void
+			{
+				flow.stopDrag();
+				flow.removeEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				
+				
+				var target:FlowPanel = flow.dropTarget.parent as FlowPanel;
+				
+				if(!target) {
+//					trace("target=",flow.dropTarget);
+//					trace("removing new flow");
+					flowGroup.removeElement(flow);
+					flow = null;
+				}
+				else 
+					TweenLite.to(flow, 1, {y: (flow.x > numberPanel.x+numberPanel.width + 10 ? 10 : numberPanel.y+numberPanel.height + 10)});
+				
+			}
+			
+			public function toXML():XML {
+				var ip:XML = <inputsPanel maximised={currentState=="maximised"}/>;
+				
+				var ipList:Vector.<InputMaker> = inputMakers;
+				for(var i:int = 0; i < ipList.length; i++) {
+					ip.appendChild(ipList[i].toXML());
+				}
+				
+				return ip;
+			}
+			
+			public function fromXML(ip:XML):void {
+				
+				var ipList:Vector.<InputMaker> = inputMakers;
+				
+				// remove any existing InputMakers
+				while(ipList.length > 0) {
+					removeInputMaker(ipList.pop());
+				}
+				
+				// add new InputMakers
+				var list:XMLList = ip.inputMaker;
+				for(var i:int=0; i < list.length(); i++) {
+					var ipXML:XML = list[i];
+					var inputMaker:InputMaker = new InputMaker();
+					if(inputMaker.fromXML(ipXML))
+						addInputMaker(inputMaker);
+					else
+						break;
+				}
+
+				if(XMLUtilities.booleanAttr(ip.@maximised, false)) {
+					callLater(expand);
+				}
+				else {
+					callLater(collapse);
+				}
+				
+			}
+			
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+	</fx:Declarations>
+	
+	<s:HGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15">
+		<s:Group id="inpGroup" >
+			<s:layout>
+				<s:TileLayout horizontalGap="0" verticalGap="0" requestedColumnCount="{Math.min(3,numInputMakers)}" />
+			</s:layout>
+		</s:Group>
+	</s:HGroup>
+	
+</components:CollapsiblePanel>

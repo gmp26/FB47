@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/halo"
+		creationComplete = "init()"
+		implements="org.maths.nrich.flows.interfaces.ISourceSkin"
+		xmlns:components="org.maths.nrich.flows.components.*" >
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.nrich.flows.components.*;
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			import org.maths.nrich.flows.model.vo.InPad;
+			import org.maths.nrich.flows.skins.SlimButtonSkin;
+
+			private function init():void
+			{
+				//trace("StepperSkin init");
+				//updatePad();
+			}
+			
+			public function get padContainer():Group {
+				return padWrapper;
+			}
+			
+			public function get catcher():Catcher
+			{
+				return hostComponent as Catcher;
+			}
+			
+			public function updatePad(event:Event = null):void {
+				inPad.expression = new Expression(stepper.value);
+			}
+			
+			[Bindable]
+			public var inPad:InPad = new InPad();
+			
+			private var _title:String = "Integer Input";
+			[Bindable]
+			public function get title():String
+			{
+				return _title;
+			}
+			public function set title(s:String):void
+			{
+				_title = s;
+			}
+			
+			
+			public function get titleHolder():Label
+			{
+				return label;
+			}
+			
+			private function variableChanged():void {
+				inPad.padVariable = variable.text;
+				hostComponent.invalidateProperties();
+			}
+			
+			public function addEventListeners():void 
+			{
+				stepper.addEventListener(Event.CHANGE, updatePad);
+			}
+			
+			public function removeEventListeners():void 
+			{
+				stepper.removeEventListener(Event.CHANGE, updatePad);
+			}
+			
+		]]>
+	</fx:Script>
+
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<s:SolidColorStroke id="outline" color="0x888888" weight="2"/>
+		<s:SolidColor id="fill" color="0x444444"/>
+		<s:SolidColor id="white" color="0xffffff" />
+		<s:SolidColor id="inputFill" color="0xff9900" />
+		<s:SolidColor id="numberPadFill" color="0xff9900" />
+	</fx:Declarations>
+	
+	<fx:Metadata> 
+		[HostComponent("org.maths.nrich.flows.components.Catcher")] 
+	</fx:Metadata>
+	
+	
+	<s:Group>
+		
+	<s:Rect id="box" radiusX="20" top="7" width="100%" height="100%" stroke="{outline}" fill="{fill}" />
+	
+	<s:VGroup horizontalAlign="center" 
+			  width="100%" height="100%" 
+			  paddingTop="10" paddingBottom="0" paddingLeft="10" paddingRight="10">
+			
+		<s:Label id="label" 
+				 text="{title}" color="0xffffff" 
+				 y="10" paddingLeft="5" paddingRight="5" />
+<!--		
+		<components:SlimButton id="label" 
+				 title="{title}" color="0xffffff"
+				 skinClass="org.maths.nrich.flows.skins.SlimButtonSkin"
+				 y="10"  />
+			
+-->		
+		<s:Group id="source">
+			
+			<components:DragSpot id="dragSpot" width="15" height="15" x="{border.width/2-5}" y="{border.height}" stroke="{hostComponent.flowStroke}" fill="{hostComponent.flowColour}" />
+	
+			<!-- source rectangle -->
+			<s:Group id="sourceArea">
+					
+				<s:Rect id="sourceRect"
+						radiusX="10"
+						width="100%"
+						height="100%"
+						stroke="{hostComponent.flowStroke}"
+						fill="{hostComponent.sourceFill}" />
+	
+				<!-- source contents on top of source -->
+				<s:VGroup id="border" styleName="sourcePad" horizontalAlign="center" gap="0">					
+								
+					<s:RichEditableText id="variable" change="variableChanged()" text="{inPad.padVariable}" 
+										color="0xffffff" fontSize="20" fontStyle="italic" fontFamily="_serif"/>
+					
+					<s:HGroup id="padWrapper" verticalAlign="middle">
+											
+						<s:NumericStepper id="stepper"
+										  value="{inPad.exprAsNumber}" minimum="{inPad.minimum}" maximum="{inPad.maximum}"
+										  fontSize="20"
+										  width="80"/>
+<!--										  change="updatePad()"/>-->
+						
+						<!-- Spacer required to get the enclosing HGroup width right -->
+						<s:Group  width="0" height="0"/>
+				
+					</s:HGroup>
+					
+					<!-- Spacer required to get the enclosing VGroup height right -->
+					<s:Group  width="0" height="4"/>
+					
+				</s:VGroup>
+				
+			</s:Group>
+		
+		</s:Group>
+			
+	</s:VGroup>
+		
+	</s:Group>
+
+	
+</s:Skin>

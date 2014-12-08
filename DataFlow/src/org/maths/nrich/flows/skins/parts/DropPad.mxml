@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 mouseChildren="true"
+		 implements="org.maths.nrich.flows.interfaces.IPad, org.maths.nrich.flows.interfaces.IDropPad" 
+		 contentBackgroundColor.sinkover="#FFFFFF" currentState="normal">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.graphics.SolidColor;
+			
+			import org.maths.Complex;
+			import org.maths.Expression;
+			import org.maths.nrich.flows.components.RunPanel;
+			import org.maths.nrich.flows.interfaces.IDropPad;
+			
+			public static const PADEDIT:String = "padEdit";
+			
+			[Bindable]
+			public var fontSize:int;
+			
+			[Bindable]
+			public var numberPadColour:SolidColor;
+			
+			private var _expression:Expression;
+			[Bindable]
+			public function get expression():Expression
+			{
+				return _expression;
+			}
+			public function set expression(expr:Expression):void
+			{
+				if(expr.name==null)
+					trace("GOTCHA!");
+				_expression = expr;
+				dispatchEvent(new Event(PADEDIT));
+				invalidateProperties();
+			}
+			
+			[Bindable]
+			public var displayText:String = "";
+		
+			
+			private var _showValues:int = 0;
+			public function get showValues():int
+			{
+				return _showValues;
+			}
+			public function set showValues(value:int):void
+			{
+				_showValues = value;
+				invalidateProperties();
+			}
+			
+			public function dragOver():void
+			{
+				currentState = "sinkover";
+			}
+			
+			public function dragOut():void
+			{
+				currentState = "normal";	
+			}
+			
+			override protected function commitProperties() : void
+			{
+				super.commitProperties();
+				
+				if(expression == null) {
+					displayText=" ";
+				}
+				else {
+					if(showValues == RunPanel.SHOWVALUES) {
+						var value:Complex = expression.evaluate();
+						displayText = value==null ? "" : value.displayString();
+					}
+					else
+						displayText = expression.displayString();
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="sinkover"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="overColour" color="0xffdd00"/>
+	</fx:Declarations>
+	
+	<s:Rect  id="pad0Drop" radiusX="5" width="100%" height="100%" 
+			 fill.normal="{numberPadColour}" fill.sinkover="{overColour}"/>
+
+	<s:HGroup styleName="numberPad" minWidth="15" minHeight="20">	
+		<s:RichEditableText color="#000000" fontFamily="Arial" minHeight="20" multiline="false" fontSize="{fontSize}" id="arg" text="{displayText}" change="dispatchEvent(new Event(PADEDIT))"/>
+	</s:HGroup>
+	
+
+	<!-- the dropPadZone is an overriding invisible dropTarget -->
+	<s:Group id="dropPadZone" width="100%" height="100%" alpha="0"  contentBackgroundColor.sinkover="#FFF600">
+		<s:Rect  id="dummy" radiusX="5" width="100%" height="100%" fill="{numberPadColour}" />
+	</s:Group>
+	
+</s:Group>

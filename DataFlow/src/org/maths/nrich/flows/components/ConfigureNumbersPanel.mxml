@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+							 addedToStage="setup()"
+							 removedFromStage="tearDown()">
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Complex;
+			import org.maths.Expression;
+			import spark.components.Group;
+			import spark.components.HGroup;
+			
+ 			public var numberPanel:DropNumberPanel;
+			public var flowGroup:FlowGroup;
+			
+			private function setup():void 
+			{
+				this.addEventListener(MouseEvent.MOUSE_OVER, revealAll);
+				this.addEventListener(MouseEvent.MOUSE_OUT, hideHidden);
+				flowGroup.addEventListener(FlowGroup.MODECHANGE, modeUpdate);
+				modeUpdate();
+			}
+			
+			private function tearDown():void
+			{
+				this.removeEventListener(MouseEvent.MOUSE_OVER, revealAll);
+				this.removeEventListener(MouseEvent.MOUSE_OUT, hideHidden);
+				flowGroup.removeEventListener(FlowGroup.MODECHANGE, modeUpdate);
+				modeUpdate();
+			}
+			
+			private function addNumbers(event:Event):void 
+			{	
+				for(var i:int = from.value; i <= to.value; i+=step.value) {
+					var aNumber:DropNumber = new DropNumber();
+					aNumber.expression = new Expression(i);
+					numberPanel.addNumber(aNumber);
+					if(hiddenCheck.selected) 
+						aNumber.hide();
+				}
+			}
+			
+			private function adde():void
+			{
+				var aNumber:DropNumber = new DropNumber();
+				aNumber.expression = new Expression(Math.E);
+				numberPanel.addNumber(aNumber);
+			}
+			
+			private function addpi():void
+			{
+				var aNumber:DropNumber = new DropNumber();
+				aNumber.expression = new Expression(Math.PI);
+				numberPanel.addNumber(aNumber);
+			}
+			
+			private function addi():void
+			{
+				var aNumber:DropNumber = new DropNumber();
+				aNumber.expression = new Expression("i");
+				numberPanel.addNumber(aNumber);
+			}
+			
+			private function clearAllNumbers(event:Event):void
+			{
+				numberPanel.clearAllNumbers();
+			}
+			
+			private function mixupNumbers(event:Event):void
+			{	
+				numberPanel.mixupNumbers();
+			}
+			
+			private function revealAll(event:MouseEvent):void
+			{
+				numberPanel.revealAll(true);
+			}
+			
+			private function hideHidden(event:MouseEvent):void
+			{
+				numberPanel.hideHidden();
+			}
+			
+			private function setPrecision():void
+			{
+				Complex.util.figures = precisionStepper.value;
+				Complex.util.rounding = rounding.selectedValue as String;
+				flowGroup.dispatchEvent(new Event(FlowGroup.STATUSCHANGE));
+			}
+			
+			private function setTrigMode():void 
+			{
+				flowGroup.useRadians = trigMode.selectedValue as Boolean;	
+				flowGroup.dispatchEvent(new Event(FlowGroup.STATUSCHANGE));
+			}
+
+			private function modeUpdate(event:Event = null):void
+			{
+				if(trigMode) trigMode.selectedValue = flowGroup.useRadians;
+				if(precisionStepper) precisionStepper.value = Complex.util.figures;
+				if(rounding) rounding.selectedValue = Complex.util.rounding;
+			}
+		
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+		<s:RadioButtonGroup id="rounding" change="setPrecision()"/>		
+		<s:RadioButtonGroup id="trigMode" change="setTrigMode()"/>		
+	</fx:Declarations>
+
+	
+	<s:VGroup id="panelContent" horizontalAlign="right"
+			  paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+		
+		<s:HGroup width="100%" verticalAlign="top">
+		
+			<s:VGroup>
+				<s:HGroup>
+					<s:Group height="100%">
+						<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+						
+						<s:VGroup  horizontalAlign="left" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+							<s:Label text="Precision" color="0xffffff"/>
+							<s:NumericStepper id="precisionStepper" minimum="2" maximum="12" value="3"  change="setPrecision()"/>
+							<s:RadioButton id="sigfig" value="sf" group="{rounding}" label="to {precisionStepper.value} sig.fig." color="0xffffff"  selected="true"/>
+							<s:RadioButton id="dp" value="dp" group="{rounding}" label="to {precisionStepper.value} d.p." color="0xffffff"/>
+						</s:VGroup>
+					</s:Group>
+					
+					<s:Group height="100%">
+						<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+						
+						<s:VGroup  horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+							<s:Label text="Special Numbers" color="0xffffff"/>
+							<s:Button label="Add π" color="0" click="addpi()"/>
+							<s:Button label="Add e" color="0" click="adde()"/>
+							<s:Button label="Add i" color="0" click="addi()"/>
+						</s:VGroup>
+				</s:Group>
+				</s:HGroup>
+				<s:Group width="100%">
+					<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+					<s:HGroup width="100%" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+						<s:Label text="Mode" color="0xffffff"/>
+						<s:VGroup  horizontalAlign="left" >
+							<s:RadioButton id="degrees" value="false" groupName="trigMode" label="use degrees" color="0xffffff"/>
+							<s:RadioButton id="radians" value="true" groupName="trigMode" label="use radians" color="0xffffff"  selected="true"/>
+						</s:VGroup>			
+					</s:HGroup>
+				</s:Group>
+			</s:VGroup>
+			
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup  horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Drag Numbers" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="from:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="from" fontSize="12" width="60" minimum="-1000" maximum="1000" value="0"/>			
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="to:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="to" fontSize="12" width="60" minimum="{from.value}" maximum="1000" value="9"/>			
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="step:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="step" fontSize="12" width="60" minimum="1" maximum="100" value="1"/>			
+					</s:HGroup>
+					<s:HGroup verticalAlign="bottom">
+						<s:Label text="hidden?" color="0xffffff"/>
+						<s:CheckBox id="hiddenCheck" selected="false"/>
+					</s:HGroup>
+					<s:Button id="addNumberButton" label="Add" click="addNumbers(event)" />
+				</s:VGroup>
+			</s:Group>
+			
+		</s:HGroup>
+
+		<s:HGroup>
+			<s:Button id="mixupButton" label="Mix Up" click="mixupNumbers(event)"/>
+			<s:Button id="clearButton" label="Clear All" click="clearAllNumbers(event)"/>
+		</s:HGroup>
+	
+	</s:VGroup>
+</components:CollapsiblePanel>

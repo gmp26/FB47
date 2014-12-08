@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{FeedbackSourceSkin}"
+				 arity="0"
+				 >
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.FeedbackSourceSkin;
+			
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:FeedbackSource = f as FeedbackSource;
+				return (tf
+					&& _padVariable == tf._padVariable);
+			}
+						
+			override protected function partAdded(partName:String, instance:Object) : void
+			{
+				super.partAdded(partName, instance);
+				
+/*  			if(instance == source) {
+					var dropButton:SlimButton = (source.skin as FeedbackSourceSkin).label;
+					dropButton.addEventListener(MouseEvent.CLICK, step);
+				}
+ */
+			}
+			
+			override protected function partRemoved(partName:String, instance:Object) : void
+			{
+				super.partRemoved(partName, instance);
+				
+/* 				if(instance == source) {
+					var dropButton:SlimButton = (source.skin as FeedbackSourceSkin).label;
+					dropButton.removeEventListener(MouseEvent.CLICK, step);
+				}
+ */			}
+			
+			
+			//public var lastExpression:Expression = new Expression(0);
+			/**
+			 * Evaluate the sink and drop the result on the next source
+			 */
+			override public function step(afterDrop:Boolean = false):void
+			{
+				//			trace(name);
+
+				if(map.output && map.output.arg0) {
+					arg0 = map.output.arg0;
+				}
+				validateNow();
+				select();
+				
+				var len:int = sinks.length;
+				for(var i:int = 0; i < len; i++) {
+					var sink:Sinker = sinks[i];
+					//				sink.expression = value;
+					sink.showValues = showValues;
+					//				sink.attachment.sourceFlow.invalidateDisplayList();
+					
+					animateStep(sinks[i], arg0, false, true, true);
+					
+					
+				}
+				
+				invalidateDisplayList();			
+			}
+			
+			override public function resetValues():void
+			{
+				super.resetValues();
+				
+				var pFlows:Vector.<Flow> = previousFlows;
+				for(var i:int = 0; i < pFlows.length; i++) {
+					var f:Flow = pFlows[i];
+					for(var j:int = 0; j < f.sinks.length; j++) {
+						var sink:Sinker = f.sinks[j];
+						var hookup:SinkSourceLink = sink.attachment;
+						if(hookup.sourceFlow == this) {
+							if(hookup.pad == source.pad0)
+								arg0 = null;
+							if(hookup.pad == source.pad1)
+								arg1 = null;
+						}
+					}
+				}
+ 				
+				if(map.output && map.output.arg0) {
+					map.output.arg0 = null;
+					arg0 = null;
+				}
+
+	
+			}
+			
+			override public function toXML():XML {
+	
+				var xml:XML = super.toXML();
+				
+				return xml;
+			}
+
+		]]>
+	</fx:Script>
+
+</components:InputFlow>

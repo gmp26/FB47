@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 addedToStage="setup()"
+							 removedFromStage="tearDown()"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin">
+	<fx:Script>
+		<![CDATA[
+			import spark.components.Group;
+			
+			public var flowGroup:FlowGroup;
+			public var inputsPanel:InputsPanel;
+			
+			private var inputMaker:InputMaker;
+			
+			private function setup():void
+			{
+				//addEventListener(CollapsiblePanel.COLLAPSE, collapsed);	
+			}
+			
+			private function tearDown():void 
+			{
+				//removeEventListener(CollapsiblePanel.COLLAPSE, collapsed);
+			}
+			
+/* 			private function collapsed(event:Event):void 
+			{
+				inputsPanel.collapse();	
+			}
+ */			
+			private function addInputMaker():void {
+				inputsPanel.addInputMaker(inputMaker);
+			}
+			
+			private function addDRandom(event:Event):void 
+			{
+				var flow:RandomDecimalSource = new RandomDecimalSource();
+				flow.padVariable = drandomPadVariable.text;
+				flow.minimum = drandFrom.value;
+				flow.maximum = drandTo.value;
+				inputMaker = new InputMaker();
+				inputMaker.flow = flow;
+				flow.mouseChildren = false;
+				inputsPanel.visible = true;
+				inputsPanel.expand();
+				callLater(addInputMaker)
+			}
+			
+			private function addRandom(event:Event):void 
+			{
+				var flow:RandomSource = new RandomSource();
+				flow.padVariable = randomPadVariable.text;
+				flow.minimum = randFrom.value;
+				flow.maximum = randTo.value;
+				inputMaker = new InputMaker();
+				inputMaker.flow = flow;
+				flow.mouseChildren = false;
+				inputsPanel.visible = true;
+				inputsPanel.expand();
+				callLater(addInputMaker)
+			}
+			
+			private function addStepper(event:Event):void 
+			{
+				var flow:StepperSource = new StepperSource();
+				flow.padVariable = stepperPadVariable.text;
+				flow.mouseChildren = false;
+				inputMaker = new InputMaker();
+				inputMaker.flow = flow;
+				inputMaker.minimum = stepFrom.value;
+				inputMaker.maximum = stepTo.value;
+				inputsPanel.visible = true;
+				inputsPanel.expand();
+				callLater(addInputMaker)
+			}
+			
+			private function addDecimal(event:Event):void 
+			{
+				var flow:DecimalSource = new DecimalSource();
+				flow.padVariable = decimalPadVariable.text;
+				inputMaker = new InputMaker();
+				inputMaker.flow = flow;
+				flow.mouseChildren = false;
+				inputsPanel.visible = true;
+				inputsPanel.expand();
+				callLater(addInputMaker)
+			}
+			
+			private function addDropper(event:Event):void 
+			{
+				var flow:DragnDropSource = new DragnDropSource();
+				flow.padVariable = dropperPadVariable.text;
+				inputMaker = new InputMaker();
+				inputMaker.flow = flow;
+				flow.mouseChildren = false;
+				inputsPanel.visible = true;
+				inputsPanel.expand();
+				callLater(addInputMaker)
+			}
+			
+			private function clearAllInputMakers(event:Event):void 
+			{
+				inputsPanel.removeAllInputMakers();
+				inputsPanel.collapse();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+						
+	</fx:Declarations>
+
+	
+	<s:VGroup id="panelContent" paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" >
+		
+		<s:HGroup width="100%">
+			<s:RichText color="0xffffff" fontSize="18" textAlign="left">
+				<s:content>Make Inputs</s:content>
+			</s:RichText>
+		</s:HGroup>
+	
+		<s:HGroup width="100%" verticalAlign="top">
+			
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				<s:VGroup id="drandom" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Random Decimal" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="variable name:" color="white"/>
+						<s:Group width="100%"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="drandomPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0"   
+												multiline="false" paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+						</s:Group>
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="from:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="drandFrom" fontSize="12" width="60" minimum="-1000" maximum="1000" value="0"/>			
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="to:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="drandTo" fontSize="12" width="60" minimum="-1000" maximum="1000" value="10"/>			
+					</s:HGroup>
+					<s:Button id="addDRandomButton" label="Add Input" click="addDRandom(event)" />
+				</s:VGroup>
+			</s:Group>
+
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup id="random" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Random Integer" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="variable name:" color="white"/>
+						<s:Group width="100%"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="randomPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0"  
+												multiline="false" paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+						</s:Group>
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="from:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="randFrom" fontSize="12" width="60" minimum="-1000" maximum="1000" value="0"/>			
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="to:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="randTo" fontSize="12" width="60" minimum="-1000" maximum="1000" value="10"/>			
+					</s:HGroup>
+					<s:Button id="addRandomButton" label="Add Input" click="addRandom(event)"/>
+				</s:VGroup>
+			</s:Group>
+			
+			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup id="stepper" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Integer Range" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="variable name:" color="white"/>
+						<s:Group width="100%"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="stepperPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0"  
+												multiline="false" paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+						</s:Group>
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="from:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="stepFrom" fontSize="12" width="60" minimum="-1000" maximum="{stepTo.value}" value="0"/>			
+					</s:HGroup>
+					<s:HGroup width="100%">
+						<s:Label text="to:" color="0xffffff"/>
+						<s:Group width="100%"/>
+						<s:NumericStepper id="stepTo" fontSize="12" width="60" minimum="{stepFrom.value}" maximum="1000" value="10"/>			
+					</s:HGroup>
+					<s:Button id="addStepperButton" label="Add Input" click="addStepper(event)"/>
+				</s:VGroup>
+			</s:Group>
+			
+			<s:VGroup>	
+				<s:Group>
+					<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+					
+					<s:VGroup id="dropper" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+						<s:Label text="Drop Input" color="0xffffff"/>
+						<s:HGroup width="100%">
+							<s:Label text="variable name:" color="white"/>
+							<s:Group width="100%"/>
+							<s:Group>
+								<s:Rect fill="{white}" width="100%" height="100%"/>
+								<s:RichEditableText id="dropperPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0"  
+												 multiline="false" paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+							</s:Group>
+						</s:HGroup>
+						
+						<s:Button id="addDropperButton" label="Add Input" click="addDropper(event)"/>
+					</s:VGroup>
+				</s:Group>	
+				<s:Group>
+					<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+					
+					<s:VGroup id="decimal" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+						<s:Label text="Decimal" color="0xffffff"/>
+						<s:HGroup width="100%">
+							<s:Label text="variable name:" color="white"/>
+							<s:Group width="100%"/>
+							<s:Group>
+								<s:Rect fill="{white}" width="100%" height="100%"/>
+								<s:RichEditableText id="decimalPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0"  
+													multiline="false" paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+							</s:Group>
+						</s:HGroup>
+						
+						<s:Button id="addDecimalButton" label="Add Input" click="addDecimal(event)"/>
+					</s:VGroup>
+				</s:Group>	
+			</s:VGroup>
+
+<!--			<s:Group>
+				<s:Rect radiusX="10"  width="100%" height="100%" stroke="{outline}" />
+				
+				<s:VGroup id="feedback" horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5">
+					<s:Label text="Feedback" color="0xffffff"/>
+					<s:HGroup width="100%">
+						<s:Label text="variable name:" color="white"/>
+						<s:Group width="100%"/>
+						<s:Group>
+							<s:Rect fill="{white}" width="100%" height="100%"/>
+							<s:RichEditableText id="feedbackPadVariable" text="x" fontFamily="_serif" fontStyle="italic" color="0" minWidth="10" 
+												paddingBottom="2" paddingTop="2" paddingLeft="2" paddingRight="2"/>
+						</s:Group>
+					</s:HGroup>
+					
+					<s:Button id="addFeedbackButton" label="Add Feedback" click="addFeedback(event)"/>
+				</s:VGroup>
+			</s:Group>	
+-->
+		</s:HGroup>
+		
+		<s:HGroup width="100%">
+			<s:Group width="100%"/>
+			<s:Button id="clearButton" label="Clear All" click="clearAllInputMakers(event)"/>
+		</s:HGroup>
+	</s:VGroup>
+</components:CollapsiblePanel>

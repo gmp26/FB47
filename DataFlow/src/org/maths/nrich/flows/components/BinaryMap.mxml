@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:Flow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{BinaryMapSkin}"
+				 arity = "2"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.BinaryMapSkin;
+			
+			// Mark the binary flows arguments
+			override public function preStepCheck():Boolean {
+				return arg0Ready && arg0 && arg1Ready && arg1;		
+			}
+
+			override public function resetForStep():void
+			{
+				var feeds:Object = padFeeds;
+				arg0Ready = (feeds.pad0 == null);
+				arg1Ready = (feeds.pad1 == null);
+			}
+			
+/* 			override public function resetForStep():void
+			{
+				var pFlows:Vector.<Flow> = previousFlows;
+				arg0Ready = true;
+				arg1Ready = true;
+				for(var i:int = 0; i < pFlows.length; i++) {
+					var f:Flow = pFlows[i];
+					for(var j:int = 0; j < f.sinks.length; j++) {
+						var sink:Sinker = f.sinks[j];
+						var hookup:SinkSourceLink = sink.attachment;
+						if(hookup.sourceFlow == this) {
+							if(hookup.pad == source.pad0)
+								arg0Ready = false;
+							if(hookup.pad == source.pad1)
+								arg1Ready = false;
+						}
+					}
+				}
+			}
+ */
+			override public function toXML():XML {
+				
+				var bm:XML = super.toXML();
+				bm.setName("binaryMap");
+				
+				return bm;
+			}
+			
+/* 			override public function fromXML(um:XML):void {				
+				super.fromXML(um);
+			}
+ */			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+
+</components:Flow>

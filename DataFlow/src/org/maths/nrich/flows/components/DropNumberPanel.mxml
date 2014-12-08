@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:TitledPanel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 title="Drag Numbers"
+		 skinClass="org.maths.nrich.flows.skins.TitledPanelSkin"
+		 width="60%"
+		 >
+
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.XMLUtilities;
+			import org.maths.nrich.flows.skins.TitledPanelSkin;
+			import org.maths.nrich.flows.skins.parts.DropPad;
+
+			public static const DROPNUMBERCHANGED:String = "dropNumberChange";
+						
+			public var flowGroup:FlowGroup;
+			
+			private function init():void {
+				trace("DropNumberPanel Init");
+			}
+			
+			public function addNumber(dropNumber:DropNumber):void 
+			{
+				// Check whether number has already been added
+				for(var i:int = 0; i < numberGroup.numElements; i++)
+				{
+					var drop:DropNumber = numberGroup.getElementAt(i) as DropNumber;
+					if(drop && drop.expression.displayString() == dropNumber.expression.displayString())
+						return;
+				}
+				
+				numberGroup.addElement(dropNumber);
+				dropNumber.addEventListener(MouseEvent.MOUSE_DOWN, createDropper);
+				
+				invalidateProperties();
+			}
+			
+			private var dropper:DropNumber;
+			
+			private function createDropper(event:MouseEvent):void 
+			{
+				
+				dropper = new DropNumber();
+				flowGroup.addElement(dropper);
+				var dropNumber:DropNumber = event.currentTarget as DropNumber;
+				dropper.expression = dropNumber.expression;
+				if(dropNumber.hidden)
+					dropper.hide();
+				dropper.colour = 0xffffff;
+				var p:Point = numberGroup.localToGlobal(new Point(dropNumber.x, dropNumber.y));
+				p = flowGroup.globalToLocal(p);
+				dropper.x = p.x;
+				dropper.y = p.y;
+				dropper.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				dropper.startDrag();
+				
+			}
+			
+			private function startDragging(event:MouseEvent = null):void 
+			{
+				dropper = event.currentTarget as DropNumber;
+				dropper.addEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				dropper.removeEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				dropper.startDrag();
+			}
+			
+			private function stopDragging(event:MouseEvent):void
+			{
+				if(!dropper)
+					return;
+				dropper.stopDrag();
+				dropper.removeEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				
+				trace(dropper.dropTarget);
+				//var dropper.dropTarget
+				var pad:DropPad;
+				var padZone:Group = dropper.dropTarget as Group;
+
+				if(padZone && padZone.id=="dropPadZone") {
+					pad = padZone.parentDocument as DropPad;
+					pad.expression = dropper.expression;//new Expression(dropper.value);
+				}
+				
+				flowGroup.removeElement(dropper);
+				dropper = null;
+			}
+			
+			private function placeDropper(event:Event):void 
+			{
+				// CODE ME
+			}
+			
+			public function sendChangeEvent():void
+			{
+				dispatchEvent(new Event(DROPNUMBERCHANGED));	
+			}
+			
+			public function clearAllNumbers():void
+			{
+				numberGroup.removeAllElements();
+			}
+			
+			public function mixupNumbers():void
+			{	
+				var dragables:Vector.<DropNumber> = new Vector.<DropNumber>();
+				while(numberGroup.numElements > 0) {
+					dragables.push(numberGroup.removeElementAt(0));
+				}
+				while(dragables.length > 0) {
+					var r:int = Math.floor(Math.random()*dragables.length);
+					if(r == dragables.length) --r;
+					var dn:DropNumber = dragables[r];
+					dragables.splice(r, 1);
+					numberGroup.addElement(dn);
+				}
+			}
+			
+			public function revealAll(temporaryReveal:Boolean = true):void
+			{
+				for(var i:int=0; i < numberGroup.numElements; i++) {
+					var dn:DropNumber = numberGroup.getElementAt(i) as DropNumber;
+					if(dn.hidden) {
+						dn.reveal(temporaryReveal);
+					}
+				}
+			}
+			
+			public function hideHidden():void
+			{
+				for(var i:int=0; i < numberGroup.numElements; i++) {
+					var dn:DropNumber = numberGroup.getElementAt(i) as DropNumber;
+					if(dn.hidden) {
+						dn.hide();
+					}
+				}
+			}
+			
+			private function get atLeastOneHidden():Boolean {
+				for(var i:int=0; i < numberGroup.numElements; i++) {
+					var dn:DropNumber = numberGroup.getElementAt(i) as DropNumber;
+					if(dn.hidden) return true;
+				}
+				return false;
+			}
+			
+			public function changeReveal():void 
+			{
+				if(revealButton.selected)
+					revealAll(true);
+				else
+					hideHidden()
+			}
+			
+			override protected function commitProperties() : void
+			{
+				if(revealPanel.visible = mixupButton.visible = revealButton.visible = atLeastOneHidden) {
+					revealPanel.height = 30;
+				}
+				else {
+					revealPanel.height = 0;
+				}
+				
+			}
+			
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number) : void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				
+				sendChangeEvent();
+			}
+			
+			public function toXML():XML {
+				var np:XML = <numberPanel title={title}/>;
+				
+				for(var i:int=0; i < numberGroup.numElements; i++) {
+					var dn:DropNumber = numberGroup.getElementAt(i) as DropNumber;
+					if(dn) {
+						np.appendChild(dn.toXML());	
+					}
+				}
+				return np;
+			}
+			
+			public function fromXML(np:XML):void {
+				// remove any existing dropNumbers
+				while(numberGroup.numElements > 0) {
+					var dn:DropNumber = numberGroup.getElementAt(0) as DropNumber;
+					dn.removeEventListener(MouseEvent.MOUSE_DOWN, createDropper);
+					numberGroup.removeElementAt(0);
+				}
+				
+				// add ones read in from XML
+				var dnList:XMLList = np.dropNumber;
+				for(var i:int=0; i < dnList.length(); i++) {
+					var foo:* = dnList[i];
+					dn = DropNumber.newFromXML(dnList[i]);
+					this.addNumber(dn);
+				}
+				
+				// change the title
+				title = XMLUtilities.stringAttr(np.@title, title);
+
+			}
+
+		]]>
+	</fx:Script>
+		
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+	</fx:Declarations>
+
+	<s:VGroup paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" width="100%">
+		<s:HGroup id="revealPanel" width="100%">
+			<s:Group width="100%"/>
+			<s:Button id="mixupButton" label="Mix Up" click="mixupNumbers()"/>
+			<s:CheckBox id="revealButton" label="Reveal" color="0xffffff" change="changeReveal()"/>
+		</s:HGroup>
+		<!--<s:Scroller width="100%" height="100%" baseColor="0xccccff">-->
+			<s:Group id="numberGroup" width="{this.width - 40}">
+				<s:layout>
+					<s:TileLayout horizontalGap="0" verticalGap="0" />
+				</s:layout>
+			</s:Group>
+		<!--</s:Scroller>-->
+	</s:VGroup>
+	
+</components:TitledPanel>

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 addedToStage="addStageHandlers()"
+		 removedFromStage="removeStageHandlers()">
+	
+	<fx:Declarations>
+		
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:Path id="flowPath"
+				winding="nonZero"
+				stroke="{stroke}"
+				/>
+				
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.graphics.SolidColor;
+			import mx.graphics.SolidColorStroke;
+			
+			import org.maths.Complex;
+			import org.maths.Expression;
+			import org.maths.MapDef;
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			import org.maths.nrich.flows.skins.parts.DropPad;
+			
+			public function get flowGroup():FlowGroup
+			{
+				return parentFlow.flowGroup;	
+			}
+			
+			[Bindable]
+			public var stroke:SolidColorStroke;
+			
+			[Bindable]
+			public var fill:SolidColor;
+			
+			[Bindable]
+			public var fontSize:int;
+		
+			public var attachment:SinkSourceLink;
+			
+			[Bindable]
+			public function get text():String{
+				return sinkValue.text;
+			}
+			public function set text(s:String):void
+			{
+				sinkValue.text = s;
+			};
+			
+			private var _expression:Expression;
+			[Bindable]
+			public function get expression():Expression{
+				return _expression;
+			}
+			public function set expression(expr:Expression):void
+			{
+				_expression = expr;
+				invalidateProperties();
+			};
+
+			private var _showValues:int = 0;
+			public function get showValues():int
+			{
+				return _showValues;
+			}
+			public function set showValues(value:int):void
+			{
+				_showValues = value;
+				invalidateProperties();
+			}
+			
+			[Bindable]
+			public var displayText:String;
+			
+			private function addStageHandlers():void {				
+				stage.addEventListener(MouseEvent.MOUSE_UP, stageMouseUp);			
+			}
+			
+			private function removeStageHandlers():void {
+				
+				removeEventListener(Event.REMOVED_FROM_STAGE, removeStageHandlers);
+				removeEventListener(Event.ADDED_TO_STAGE, addStageHandlers);
+				
+				stage.removeEventListener(MouseEvent.MOUSE_UP, stopDragging);
+				
+			}
+			
+			public function addEventHandlers():void
+			{
+				addEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				addEventListener(MouseEvent.MOUSE_UP, stopDragging);	
+			}
+			
+			public function removeEventHandlers():void
+			{
+				removeEventListener(MouseEvent.MOUSE_DOWN, startDragging);
+				removeEventListener(MouseEvent.MOUSE_UP, stopDragging);	
+			}
+			
+			public function removeMoveHandler():void 
+			{
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE, sinkMove);
+			}
+			
+			public var dragging:Boolean = false;
+			private var sx0:int;
+			private var sy0:int;
+			
+			private function stageMouseUp(event:MouseEvent):void {
+				if(dragging) {
+					stopDragging(event);
+				}
+			}
+			
+			public function startDragging(event:MouseEvent = null):void {
+				if(!dragging) {
+					var dragBounds: Rectangle;
+					
+					dragBounds = flowGroup.getRect(parentFlow.skin);
+					dragBounds.width -= width;
+					dragBounds.height -= height;
+					sx0 = x;
+					sy0 = y;
+					
+					dragging = true;
+					startDrag(false, dragBounds);
+					
+					if(attachment) {
+						attachment.sinkFlow.unlink(attachment);
+					}
+					
+					stage.addEventListener(MouseEvent.MOUSE_MOVE, sinkMove);
+				}
+			}
+			
+			private function stopDragging(event:MouseEvent = null):void {
+				if(dragging) {
+					dragging = false;
+					if(dropHilightObject) {
+						dropHilightObject.dragOut();
+						dropHilightObject = null;
+					}
+					stopDrag();
+					stage.removeEventListener(MouseEvent.MOUSE_MOVE, sinkMove);
+					
+					/* if we landed on nothing, self destruct */
+					if(parentFlow.dropOn(this, dropTarget) == null) {
+						parentFlow.removeSink(this);
+					}
+					else {
+						// make sure those binaries are ready to go...
+						var output:OutputFlow = parentFlow.flowMap.output;
+						if(output) output.primeBinaryFlows(output);
+					}
+				}
+			}
+			
+			public function get parentFlow():Flow
+			{
+				if(parentDocument)
+					return parentDocument.hostComponent as Flow;
+				return null;
+			}
+			
+			[Bindable]
+			private var highlightAlpha:Number = 1.0;
+			
+			private var dropHilightObject:DropPad;
+			
+			private function dragOver():void 
+			{
+				dropHilightObject.dragOver();
+				highlightAlpha = 1.0;
+				sinkValue.invalidateDisplayList();
+			}
+			
+			private function dragOut():void 
+			{
+				dropHilightObject.dragOut();
+				dropHilightObject = null;
+				highlightAlpha = 1.0;	
+			}
+			
+			private function sinkMove(event:MouseEvent):void {
+				//trace("Sink parentFlow="+parentFlow);
+				parentFlow.updatePath(this);
+				
+				var dropObject:Object = dropTarget;
+				
+				if(dropObject is Group) {
+					if(dropObject.id == "dropPadZone") {
+						if(dropHilightObject)
+							return;
+						dropHilightObject = (dropObject as Group).parentDocument as DropPad;
+						dragOver();
+					}
+					
+					else if(dropHilightObject) {
+						dragOut();
+					}
+				}
+			}
+			
+			override protected function commitProperties() : void
+			{
+				super.commitProperties();
+				
+				if(parentFlow)
+					parentFlow.updatePath(this);
+				
+				if(expression == null) {
+					displayText="";
+				}
+				else {
+					if(showValues == RunPanel.SHOWVALUES) {
+						var value:Complex = expression.evaluate();
+						displayText = value==null ? "" : value.displayString();
+					}
+					else if(showValues == RunPanel.SHOWWORKING) {
+						displayText = expression.displayString();
+					}
+					else {
+						// This will be very slow, but might work
+						var mapDef:MapDef = new MapDef("foo");
+						parentFlow.fillInMapDef(mapDef, mapDef.expression);
+						displayText = mapDef.expressionAsString;
+					}
+				}
+				
+/* 				if(parentFlow && parentFlow.hidden && displayText.length > 1) {
+					var queries:String = "%#%#%#%#%#%#%#%#";
+					displayText = queries.substr(0, displayText.length - 1);
+				}
+ */				
+			}
+			
+
+						
+		]]>
+	</fx:Script>
+	
+	<s:Group id="dropper" >
+
+		<s:Rect id="sinkRect"
+				radiusX="5"
+				width="100%"
+				height="100%"
+				minWidth="25"
+				minHeight="20"
+				fill="{fill}"
+				/>
+		
+		<s:HGroup styleName="sinkPad">	
+			<s:RichText id="sinkValue" color="#000000" fontFamily="Arial" fontSize="{fontSize}" textAlpha="{highlightAlpha}" text="{displayText}"/>
+		</s:HGroup>
+		
+	</s:Group>
+
+</s:Group>

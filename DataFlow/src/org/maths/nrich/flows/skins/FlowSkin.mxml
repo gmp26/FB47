@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		 preinitialize="init()"
+		 addedToStage="onAdd()"
+		 removedFromStage="tearDown()"
+		 xmlns:components="org.maths.nrich.flows.components.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.graphics.SolidColorStroke;
+			import org.maths.nrich.flows.components.*;
+
+			protected var flowGroup:FlowGroup;
+									
+			
+			[Bindable]
+			public var sourceSkin:Class;
+			
+			[Bindable]
+			private var flowStroke:SolidColorStroke;
+			
+			private function init():void {
+				setupStyles();
+			}
+			
+			private function onAdd():void {
+				flowGroup = (hostComponent as Flow).flowGroup;
+				addHandlers();
+				addEventListener(Event.RENDER, renderHandler);
+			}
+			
+			private function renderHandler(event:Event):void
+			{
+				// This ensures that the path from source to sink gets drawn AFTER 
+				// source and sink widths are known.
+				removeEventListener(Event.RENDER, renderHandler);
+				//sink.updatePath();
+			}
+			
+			private function tearDown():void {
+				removeHandlers();
+			}
+			
+			private function setupStyles():void {
+				var flowStyle:CSSStyleDeclaration = styleManager.getStyleDeclaration(".flow");
+				flowStroke = new SolidColorStroke(
+					Number(flowStyle.getStyle('flowColour')) || 0xccccff, 
+					Number(flowStyle.getStyle('flowWeight')) || 4
+				);
+			}
+			
+			protected function addHandlers():void {								
+			}
+			
+			protected function removeHandlers():void {
+			}
+			
+						
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+
+	</fx:Declarations>
+	
+	<fx:Metadata>
+		[HostComponent("org.maths.nrich.flows.components.Flow")]
+	</fx:Metadata> 
+
+	<s:layout>
+		<s:HorizontalLayout />
+	</s:layout>
+
+	<s:states>
+		<s:State name="normal" />
+		<s:State name="over" />
+		<s:State name="selected" />
+		<s:State name="selectedOver" />
+	</s:states>
+	
+		<s:Group id="shadowGroup" mouseEnabledWhereTransparent="false" x="0" y="0">
+	
+			<s:filters>
+				<s:DropShadowFilter alpha="1.0" angle="45" blurX="2" blurY="2" color="0x000000" distance="2" hideObject="false" inner="false" knockout="false" quality="2" strength="1"/>
+				<s:BevelFilter angle="45.0" blurX="1" blurY="1" distance="1" highlightAlpha="1.0" highlightColor="#cccccc" knockout="false" quality="2" shadowAlpha="1.0" shadowColor="0x000000" strength="1" type="inner"/>
+			</s:filters>
+	
+			<s:Group id="selectableGroup">
+				<s:filters>
+					<s:GlowFilter inner="false" strength="5" blurX="7" blurY="7" alpha="1" alpha.normal="0" color.over="0xffff00" color.selectedOver="0xff9900" color.selected="0xff9900"/>
+				</s:filters>
+				<components:Catcher id="source" op="+" skinClass="{(hostComponent as Flow).sourceSkin}"/>
+			</s:Group>
+			
+<!--			
+			<s:VGroup id="decorator">
+				<components:PanelButton id="removeButton" click="{hostComponent.removeMe()}"
+										baseColor="0xff0000"
+										skinClass="org.maths.nrich.flows.skins.PanelBarButton"
+										label="delete"
+										/>
+				<components:PanelButton id="hideRevealButton" 
+										baseColor="0x990099"
+										skinClass="org.maths.nrich.flows.skins.PanelBarButton"
+										label="hide"
+										/>
+			</s:VGroup>
+-->
+		</s:Group>
+</s:Skin>

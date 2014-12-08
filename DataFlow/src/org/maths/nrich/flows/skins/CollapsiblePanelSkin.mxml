@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:parts="org.maths.nrich.flows.skins.parts.*"
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 currentState="maximised" xmlns:mx="library://ns.adobe.com/flex/halo"
+		 creationComplete="init()">
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColorStroke id="outline" color="0x888888" weight="2"/>
+		<s:SolidColor id="fill" color="0x444444"/>
+		<s:SolidColor id="ioPadColour" />
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="maximised"/>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+	</s:states>
+	
+	<s:transitions>
+		<s:Transition fromState="normal" toState="maximised">
+			<s:Fade target="{contentGroup}"  duration="1000"/>
+		</s:Transition>
+		<s:Transition fromState="maximised" toState="normal">
+			<s:Fade target="{contentGroup}"  duration="0"/>
+		</s:Transition>
+	</s:transitions>
+	
+	<fx:Metadata>
+		[HostComponent('org.maths.nrich.flows.components.CollapsiblePanel')]
+	</fx:Metadata>
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.components.CollapsiblePanel;
+
+			public static const COLLAPSE:String = "collapse";
+			public static const EXPAND:String = "expand";
+			
+			private function init():void
+			{
+				label.addEventListener(MouseEvent.CLICK, switchState);
+			}
+			
+			protected function switchState(event:Event = null):void {
+				if(currentState=="normal") {
+					//currentState = "maximised";
+					dispatchEvent(new Event(EXPAND));
+				}
+				else {
+					//currentState = "normal";
+					dispatchEvent(new Event(COLLAPSE));
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:filters>
+		<s:DropShadowFilter blurX="4" blurY="4" distance="4" includeIn="maximised"/>
+	</s:filters>
+	
+	<s:Rect id="box" radiusX="20" top="7" width="100%" height="100%" stroke="{outline}" fill="{fill}" includeIn="maximised"/>	
+
+	<s:HGroup id="labelGroup" gap="0" verticalAlign="middle">
+		
+		<s:Group width="100%"/>
+		
+		<s:Label id="label" 
+				 text="title" color="0xffffff" backgroundColor="0x444444" 
+				 y="10" paddingLeft="5" paddingRight="5" />
+
+		<components:PanelButton id="button1"
+			baseColor.maximised="0xff9900"
+			baseColor.normal="0x88dd00"
+			label.maximised="-"
+			label.normal="+"
+			skinClass="org.maths.nrich.flows.skins.PanelBarButton"
+			hitArea="{labelGroup}"
+			click="switchState()"/>
+		
+	</s:HGroup>
+	
+	<s:Group id="contentGroup" includeIn="maximised" />
+	
+</s:Skin>

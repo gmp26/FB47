@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{DragnDropSourceSkin}"
+				 arity = "0"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.DragnDropSourceSkin;	
+			
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:DragnDropSource = f as DragnDropSource;
+				return (tf
+					&& _padVariable == tf._padVariable);
+			}
+			
+			override public function get arg0():Expression {
+				return super.arg0;
+			}
+			override public function set arg0(s:Expression):void {
+				super.arg0 = s;
+				if(map && map.output)
+					map.output.run();
+			}
+
+			override public function toXML():XML {
+				
+				var xml:XML = super.toXML();
+				xml.@flow = "dragnDropSource";
+				
+				trace("dragnDropSource =" + xml.toXMLString());
+				return xml;
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+
+</components:InputFlow>

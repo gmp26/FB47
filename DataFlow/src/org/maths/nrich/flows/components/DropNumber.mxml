@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo"
+		  >
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.XMLUtilities;
+			
+			public var hidden:Boolean = false;
+			
+			[Bindable]
+			public var expression:Expression;
+			
+			[Bindable]
+			public var colour:uint = 0xcccccc;
+			
+			public function reveal(temporaryReveal:Boolean = false):void
+			{
+				currentState="normal";
+				if(!temporaryReveal) hidden = false;
+			}
+			public function hide():void
+			{
+				currentState="hidden";
+				hidden = true;
+			}
+			
+			public function toXML():XML {
+				var dn:XML = <dropNumber/>;
+				if(hidden) dn.@hidden = "true";
+				dn.@value = expression.displayString();
+				return dn;
+			}
+			
+
+			public static function newFromXML(dn:XML):DropNumber {
+				var dropNumber:DropNumber = new DropNumber();
+				if(XMLUtilities.booleanAttr(dn.@hidden, false))
+					dropNumber.hide();
+				
+				var s:String = XMLUtilities.stringAttr(dn.@value, "0");
+				try {
+					dropNumber.expression = new Expression(s);
+				}
+				catch (e:Error) {
+					dropNumber.expression = new Expression(0);
+				}
+				
+				dropNumber.invalidateProperties();
+				return dropNumber;
+			}
+		]]>
+	</fx:Script>
+	
+	<s:filters>
+		<s:DropShadowFilter/>
+		<s:BevelFilter/>
+		<s:BlurFilter blurX="10" blurY="10" includeIn="hidden"/>
+	</s:filters>
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+
+	<s:BorderContainer id="number"
+			  borderWeight="2"
+			  borderColor="0xffffff"
+			  cornerRadius="5"
+			  backgroundColor="{colour}"
+			  backgroundAlpha="1"
+			  width="{text.width}" height="{text.height}">
+		
+		<s:RichText id="text" text="{expression.displayString()}" fontSize="24"
+					whiteSpaceCollapse="collapse" horizontalCenter="0"
+					paddingBottom="4" paddingTop="4" paddingLeft="4" paddingRight="4"/>
+	</s:BorderContainer>
+	
+</s:Group>

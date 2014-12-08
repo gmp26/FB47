@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{DecimalSourceSkin}"
+				 isInput = "true"
+				 arity = "0"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.DecimalSourceSkin;
+			
+			import spark.components.RichEditableText;	
+
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:DecimalSource = f as DecimalSource;
+				return (tf
+					&& _padVariable == tf._padVariable
+					&& _minimum == tf._minimum
+					&& _maximum == tf._maximum);
+			}
+			
+			override protected function partAdded(partName:String, instance:Object) : void
+			{
+				super.partAdded(partName, instance);
+				
+				if(instance == source) {
+ 					var decimalSkin:DecimalSourceSkin = source.skin as DecimalSourceSkin;
+/*					var dropButton:SlimButton = decimalSkin.label;
+					dropButton.addEventListener(MouseEvent.CLICK, drop);
+ */					
+					var textEntry:RichEditableText = decimalSkin.decimalValue;
+					textEntry.addEventListener(KeyboardEvent.KEY_DOWN, key);
+					decimalSkin.addEventListeners();
+					decimalSkin.updatePad();
+					
+				}
+			}
+			
+			override protected function partRemoved(partName:String, instance:Object) : void
+			{
+				super.partRemoved(partName, instance);
+				
+				if(instance == source) {
+ 					var decimalSkin:DecimalSourceSkin = source.skin as DecimalSourceSkin;
+/*					var dropButton:SlimButton = decimalSkin.label;
+					dropButton.removeEventListener(MouseEvent.CLICK, drop); */
+					decimalSkin.removeEventListeners();
+				}
+			}
+			
+			private function key(event:KeyboardEvent):void
+			{
+				trace(event.charCode);
+				if(event.charCode == 13 || event.charCode == 10) {
+					event.preventDefault();
+					step();
+				}
+			}
+
+			override public function toXML():XML {
+				
+				var xml:XML = super.toXML();
+				xml.@flow = "decimalSource";
+				
+				return xml;
+			}			
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</components:InputFlow>

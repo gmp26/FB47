@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:Flow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 isOutput = "true"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "org.maths.nrich.flows.skins.sources.OutputSkin"
+				 arg0 = "{null}"
+				 creationComplete = "init()"
+				 addedToStage = "setup()"
+				 removedFromStage = "tearDown()"
+				 arity = "1"
+				 >
+
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.charts.PlotChart;
+			import mx.charts.series.PlotSeries;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.graphics.SolidColorStroke;
+			
+			import org.maths.Complex;
+			import org.maths.Expression;
+			import org.maths.MapDef;
+			import org.maths.XMLUtilities;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.OutputSkin;
+			
+			import spark.components.Button;
+			import spark.components.RichEditableText;
+			import spark.components.RichText;
+			
+			private function init():void
+			{
+				//var map:Mapping = new Mapping();
+				//map.output = this;
+				if(flowGroup && (!map.fill || map.fill == defaultFill))
+					map.fill = flowGroup.getOutputFill(this);
+				setSourceFill(map.fill);
+				//setMapping(map);
+				
+			}
+			
+ 			private function setup():void
+			{
+				if(flowGroup) {
+					if(flowGroup.graphPanel)
+						flowGroup.graphPanel.addEventListener(GraphPanel.CLEAR, clearPlot);
+					if(flowGroup.tablePanel)
+						flowGroup.tablePanel.addEventListener(GraphPanel.CLEAR, clearPlot);
+				}
+			}
+			
+			private function tearDown():void
+			{
+				if(flowGroup) {
+					if(flowGroup.graphPanel)
+						flowGroup.graphPanel.removeEventListener(GraphPanel.CLEAR, clearPlot);
+					if(flowGroup.tablePanel)
+						flowGroup.tablePanel.removeEventListener(GraphPanel.CLEAR, clearPlot);
+				}
+			}
+ 			
+			private var _functionName:String = "f";
+			public function get functionName():String {
+				var skin:OutputSkin = source.skin as OutputSkin;
+				if(skin) 
+					return skin.fnameText.text;
+				else
+					return _functionName;
+			}
+			public function set functionName(name:String):void {
+				_functionName = name;
+				var skin:OutputSkin;
+				if(source) skin = source.skin as OutputSkin;
+				if(skin) skin.fnameText.text = name;
+			}
+			
+			[Bindable]
+			private var varValues:Object = {};
+			
+			
+			public function setVarValue(varName:String, value:Expression):void
+			{
+				varValues[varName] = value;
+				var names:Vector.<String> = _varNames.concat();
+				
+				for(var i:int = 0; i < names.length; i++) {
+					var val:Expression = varValues[names[i]] as Expression; 
+					var input:InputFlow = map.inputNamed(names[i]);
+					if(val) {
+						if(input.hidden)
+							names[i] = '?'
+						else
+							names[i] = val.evaluate().displayString();
+						var skin:OutputSkin = source.skin as OutputSkin;
+						if(skin) {
+							var rt:RichText = skin.varsText;
+							rt.text = names.join(",");
+							rt.setStyle("fontStyle", "normal");
+						}
+					}
+				}
+				invalidateProperties();
+			}
+			
+			private function updateVarValues():void 
+			{
+				for(var i:int = 0; i < map.inputs.length; i++) {
+					setVarValue(map.inputs[i].padVariable, map.inputs[i].arg0);
+				}
+			}
+			
+			//
+			// Variable Name edits
+			//
+			private var _varNames:Vector.<String> = Vector.<String>(["x"]);
+			
+			public function get varNames():Vector.<String>
+			{
+				//var skin:OutputSkin = source.skin as OutputSkin;
+				//if(skin) 
+				//	return Vector.<String>(skin.varsText.text.split(","));
+				//else
+				return _varNames;
+			}
+			public function set varNames(names:Vector.<String>):void
+			{
+				_varNames = names;
+				var skin:OutputSkin;
+				if(source) skin = source.skin as OutputSkin;
+				if(skin) {
+					var rt:RichText = skin.varsText;
+					rt.text = names.join(",");
+					rt.setStyle("fontStyle", "italic");
+					varValues = {};
+				}
+				invalidateProperties();
+			}
+			
+			
+			private function functionNameChange(event:Event):void {
+				var skin:OutputSkin = source.skin as OutputSkin;
+				functionName = skin.fnameText.text;
+				trace("function name changed to:", functionName);
+			}
+			
+
+			public function primeBinaryFlows(flow:Flow):void
+			{
+/* 				 // Binary flows must be reprimed because they can only fire when both pads are available
+				 //  For non-binary flows this is a null op.
+				flow.resetForStep();
+				for(var i:int=0; i < flow.previousFlows.length; i++) {
+					primeBinaryFlows(flow.previousFlows[i]);
+				}
+ */
+				for(var i:int=0; i < map.inputs.length; i++) {
+					map.inputs[i].resetForStep();
+				}
+				for(i=0; i < map.flows.length; i++) {
+					map.flows[i].resetForStep();
+				}
+			}
+			
+			/**
+			 * Called by Catchers when the final output has been reached
+			 */
+			public function complete():void
+			{
+				updateVarValues();
+				invalidateSkinState();
+				primeBinaryFlows(this);
+				plot();
+			}
+			
+			private var plotButton:Button;
+			private var plotSeries:PlotSeries;
+			
+			[Bindable]
+			public var plotPoints:ArrayCollection = new ArrayCollection([]);
+			
+			[Bindable]
+			public var tableData:ArrayCollection;
+			
+			private function tabulate(plotPoint:Object):void {
+				// Don't duplicate
+				if(map.inputs.length==1) {
+					if(map.inputs[0].hidden)
+						plotPoint.x="?";
+				}
+				if(map.inputs.length==2) {
+					var x:Array = (plotPoint.x as String).split(',');
+					if(map.inputs[0].hidden)
+						x[0]="?";
+					if(map.inputs[1].hidden)
+						x[1]="?";
+					plotPoint.x = x.join(',');
+				}
+				if(hidden)
+					plotPoint.y = '?';
+				if(plotPoint.y is Number || plotPoint.y is Complex) {
+					var y:Complex = new Complex(plotPoint.y);
+					plotPoint.y = y.displayString();
+				}
+				
+				for(var i:int=0; i < tableData.length; i++) {
+					var tableRow:Object = tableData.getItemAt(i);
+					if(tableRow.x == plotPoint.x && tableRow.y == plotPoint.y && tableRow.name==functionName)
+						return;
+				}
+				tableData.addItem(plotPoint);
+			}
+			
+			public function plot(event:MouseEvent = null):void {
+				if(varNames.length == 0)
+					return;
+				if(varNames.length == 1) {
+					plot1();
+				}
+				else {
+					plot2();
+				}
+			}
+			
+			public function plot1():void {
+				
+				var variable:String = varNames[0] as String;
+				if(!variable) return;
+				
+				var expr:Expression = varValues[variable] as Expression;
+				if(!expr) return;
+				
+				if(arg0 == null) return;
+				var yexpr:Complex = arg0.evaluate();
+				if(yexpr.displayString() == "Error")
+					return;
+				
+				var xval:Number = expr.evaluate().x;
+				var yval:Number = yexpr.x;
+				if(isNaN(xval) || isNaN(yval)) return;
+				
+				// Don't duplicate
+				var plotPoint:Object;
+				for(var i:int=0; i < plotPoints.length; i++) {
+					plotPoint = plotPoints.getItemAt(i);
+					if(plotPoint.x == xval && plotPoint.y == yval && plotPoint.name==functionName)
+						return;
+				}
+				
+				plotPoints.addItem(plotPoint = {x:xval, y:yval, name:functionName})
+					
+				tabulate(plotPoint);
+					
+				var plot:PlotChart = flowGroup.graphPanel.plot;
+				if(plotSeries == null) {
+					plotSeries = new PlotSeries();
+					plotSeries.xField="x";
+					plotSeries.yField="y";
+					plotSeries.dataProvider = plotPoints;
+					plotSeries.displayName = functionName;
+					plotSeries.setStyle("fill", map.fill);
+					plotSeries.setStyle("stroke",  new SolidColorStroke(0xffffff,2));
+					plotSeries.setStyle("radius", 8);
+					plot.series.push(plotSeries);
+					plot.series = plot.series.concat();
+				}
+				plot.invalidateSeriesStyles();
+				
+				plot.invalidateProperties();
+				plot.invalidateDisplayList();
+				flowGroup.graphPanel.invalidateDisplayList();
+				plotSeries.invalidateProperties();
+			}
+			
+			private function plot2():void 
+			{					
+					var variable:String = varNames[0] as String;
+					if(!variable) return;
+					
+					var expr0:Expression = varValues[variable] as Expression;
+					if(!expr0) return;
+					
+					variable = varNames[1] as String;
+					if(!variable) return;
+					
+					var expr1:Expression = varValues[variable] as Expression;
+					if(!expr1) return;
+					
+					if(arg0 == null) return;
+					var yexpr:Complex = arg0.evaluate();
+					if(yexpr.displayString() == "Error")
+						return;
+					
+					var x0val:Number = expr0.evaluate().x;
+					var x1val:Number = expr1.evaluate().x;
+					var yval:Number = yexpr.x;
+					if(isNaN(x0val) || isNaN(x1val) || isNaN(yval)) return;
+					var xval:String = ""+x0val+","+x1val; 
+					
+					// Don't duplicate
+					var plotPoint:Object;
+					for(var i:int=0; i < plotPoints.length; i++) {
+						plotPoint = plotPoints.getItemAt(i);
+						if(plotPoint.x == xval && plotPoint.y == yval && plotPoint.name==functionName)
+							return;
+					}
+					
+					//plotPoints.addItem(plotPoint = {x:xval, y:yval, name:functionName})
+					plotPoint = {x:xval, y:yval, name:functionName}
+					tabulate(plotPoint);
+					
+			}
+			
+			public function clearPlot(event:Event = null):void 
+			{
+
+				while(plotPoints.length > 0)
+					plotPoints.removeItemAt(0);
+				while(tableData.length > 0) 
+					tableData.removeItemAt(0);
+				
+			}
+			
+			[SkinPart(required="false")]
+			public var fNameText:RichEditableText;
+			
+			override protected function partAdded(partName:String, instance:Object):void { 
+				super.partAdded(partName, instance); 
+				
+				if (instance == source) {					
+					var skin:OutputSkin = source.skin as OutputSkin;
+					skin.fnameText.text = _functionName;
+					skin.varsText.text = _varNames.join(",");
+					skin.fnameText.addEventListener(Event.CHANGE, functionNameChange);
+					skin.runButton.addEventListener(MouseEvent.CLICK, run);
+					skin.minimiseButton.addEventListener(MouseEvent.CLICK, define);
+				}	
+			}
+			
+			override protected function partRemoved(partName:String, instance:Object) : void 
+			{
+				super.partRemoved(partName, instance);
+				
+				if (instance == source) {
+					var skin:OutputSkin = source.skin as OutputSkin;
+					skin.fnameText.removeEventListener(Event.CHANGE, functionNameChange);					
+					skin.runButton.removeEventListener(MouseEvent.CLICK, run);
+					skin.minimiseButton.removeEventListener(MouseEvent.CLICK, define);
+				} 
+				
+			}
+
+			public function run(event:MouseEvent = null):void
+			{
+				if(flowGroup && flowGroup.paused.visible)
+					return;
+				
+				//bfPrimed = false;
+				var flist:Vector.<Flow> = map.flows;
+				for(var i:int = 0; i < flist.length; i++) {
+					var bf:Flow = flist[i];
+					bf.resetForStep();
+				}
+				for(i = 0; i < map.inputs.length; i++) {
+					map.inputs[i].step();
+				}
+				for(i = 0; i < map.flows.length; i++) {
+					var f:Flow = map.flows[i];
+					if(f.preStepCheck()) 
+						map.flows[i].step();
+				}
+			}
+			
+			private function define(event:MouseEvent):void
+			{
+				var skin:OutputSkin = source.skin as OutputSkin;
+
+				var pFlows:Vector.<Flow> = previousFlows;
+				if(pFlows.length > 0) {
+					var mapDef:MapDef = new MapDef(functionName);
+					if(pFlows[0].fillInMapDef(mapDef, mapDef.expression)) {
+						trace("mapDef = "+mapDef.expression.displayString());
+						mapDef.expressionAsString = mapDef.expression.displayString();
+						var displayString:String = mapDef.expression.displayString();
+						var re:RegExp = new RegExp("(\\W|^)"+functionName+"\\(");
+						if(displayString.match(re)) {
+							Alert.show("deleting "+functionName+" to avoid clash",
+								"Recursive calls are not allowed",
+								Alert.OK);
+							
+							for(var i:int = 0; i < map.flows.length; i++) {
+								var f:Flow = map.flows[i];
+								if(f.op == functionName)
+									f.removeMe();
+							}
+						}
+						else {
+							Expression.setMapDef(mapDef);
+							createMap(mapDef);
+							/*							
+							// Colour the defined map black
+ 							var m:Mapping = map.clone();
+							m.fill = new SolidColor(0);
+							setSourceFill(m.fill);
+							floodMap(m, 0, true);
+							*/							
+						}
+					}
+				}
+			}
+
+			
+			private var definedFlowMaker:FlowMaker;
+			
+			private function createMap(mapDef:MapDef):void 
+			{
+				var flow:Flow;
+				if(mapDef.dummyVars.length == 1) {
+					flow = new UnaryMap();
+					flow.op = functionName;
+				}
+				else if(mapDef.dummyVars.length == 2) {
+					flow = new BinaryMap();
+					flow.op = functionName;
+					
+					// make sure the dummy vars are in alphabetical order
+					mapDef.dummyVars.sort(function(a:String, b:String):Number{
+						if(a==b) return 0;
+						if(a < b) return -1;
+						return 1;
+					});
+					
+				}
+				else
+					return;
+				
+				var flowMaker:FlowMaker = new FlowMaker();
+				flowMaker.flowGroup = flowGroup;
+				flowMaker.flow = flow;
+				flow.mouseChildren = false;
+				flowGroup.operationsPanel.addFlowMaker(flowMaker);
+				
+				// We have to remember this in case we need to delete it later.
+				definedFlowMaker = flowMaker;
+			}
+			
+			override public function toXML():XML {
+				
+				var out:XML = super.toXML();
+				out.setName("outputFlow");
+				out.@fname = functionName;
+				
+				return out;
+			}
+			
+ 			override public function fromXML(outputXML:XML):void {
+				super.fromXML(outputXML);
+				
+				var s:String = XMLUtilities.stringAttr(outputXML.@fname, null);
+				if(s) functionName = s;
+				
+			}
+
+		]]>
+	</fx:Script>
+</components:Flow>

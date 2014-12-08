@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:InputFlow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				 xmlns:s="library://ns.adobe.com/flex/spark" 
+				 xmlns:mx="library://ns.adobe.com/flex/halo"
+				 xmlns:components="org.maths.nrich.flows.components.*"
+				 skinClass = "{FlowSkin}"
+				 sourceSkin = "{StepperSourceSkin}"
+				 isInput = "true"
+				 arity = "0"
+				 >
+	<fx:Script>
+		<![CDATA[
+			import org.maths.Expression;
+			import org.maths.nrich.flows.skins.FlowSkin;
+			import org.maths.nrich.flows.skins.sources.StepperSourceSkin;
+						
+			override public function duplicates(f:InputFlow):Boolean
+			{
+				var tf:StepperSource = f as StepperSource;
+				return (tf
+					&& _padVariable == tf._padVariable
+					&& _minimum == tf._minimum
+					&& _maximum == tf._maximum);
+			}
+			
+			override protected function partAdded(partName:String, instance:Object) : void
+			{
+				super.partAdded(partName, instance);
+				
+				if(instance == source) {
+					var stepperSkin:StepperSourceSkin = source.skin as StepperSourceSkin;
+/* 					var dropButton:SlimButton = stepperSkin.label;
+					dropButton.addEventListener(MouseEvent.CLICK, step);
+ */					stepperSkin.addEventListeners();
+ 					stepperSkin.updatePad();
+				}
+			}
+			
+			override protected function partRemoved(partName:String, instance:Object) : void
+			{
+				super.partRemoved(partName, instance);
+				
+				if(instance == source) {
+					var stepperSkin:StepperSourceSkin = source.skin as StepperSourceSkin;
+/* 					var dropButton:SlimButton = stepperSkin.label;
+					dropButton.removeEventListener(MouseEvent.CLICK, step);
+ */					stepperSkin.removeEventListeners();
+				}
+			}
+			
+			override public function set arg0(s:Expression):void {
+				_arg0 = s;
+				if(source) {
+					source.arg0 = s;
+				}
+				
+				invalidateProperties();
+			}
+			
+		
+			override public function toXML():XML {
+				
+				trace(className);
+				
+				var xml:XML = super.toXML();
+				xml.@flow = "stepperSource";
+				
+				return xml;
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</components:InputFlow>

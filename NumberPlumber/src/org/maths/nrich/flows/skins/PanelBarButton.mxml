@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" 
+		 xmlns:components="org.maths.nrich.flows.components.*"
+		 alpha.disabled = "0.5"
+		 >
+	
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	
+	<s:states>
+		<s:State name="over"/>
+		<s:State name="down"/>
+		<s:State name="up"/>
+		<s:State name="disabled"/>
+	</s:states>
+	
+	<fx:Declarations>
+
+		<s:SolidColor id="fill" color="{hostComponent.baseColor}" />
+		<s:SolidColor id="black" color="0x000000" />
+		<s:SolidColor id="white" color="0xffffff" />
+		<s:LinearGradient id="gradient">
+			<s:GradientEntry color="white" alpha="0.3" ratio="1"/>
+			<s:GradientEntry color="black" alpha="0.3" ratio="0"/>
+		</s:LinearGradient>
+		
+		<s:Group id="plusIcon">
+			<s:Rect x="3" y="6" width="9" height="3" fill="{black}" />
+			<s:Rect x="6" y="3" height="9" width="3" fill="{black}" /> 
+		</s:Group>
+		
+		<s:Group id="timesIcon">
+			<s:Rect x="-4" y="-6" width="9" height="3" fill="{black}" rotation="45"/>
+			<s:Rect x="-6" y="0" width="9" height="3" fill="{black}" rotation="-45"/>
+		</s:Group>
+		
+		<s:Group id="hideIcon">
+			<s:filters>
+				<s:BlurFilter blurX="4" blurY="4"/>
+			</s:filters>
+			<s:Rect x="-4" y="-6" width="9" height="3" fill="{white}" rotation="45"/>
+			<s:Rect x="-6" y="0" width="9" height="3" fill="{white}" rotation="-45"/>
+		</s:Group>
+		
+		<s:Group id="minusIcon">
+			<s:Rect x="3" y="6" width="9" height="3" fill="{black}" />
+		</s:Group>
+		
+	</fx:Declarations>
+
+	<fx:Script>
+		<![CDATA[
+			
+			private var _text:String;
+			public function get text():String {
+				return _text;
+			}
+			public function set text(s:String):void {
+				_text = s;
+				switch(_text) {
+					case '-':
+						if(icon.numElements > 0)
+							icon.removeElementAt(0);
+						icon.addElement(minusIcon);
+						break;
+					case '+':
+						if(icon.numElements > 0)
+							icon.removeElementAt(0);
+						icon.addElement(plusIcon);
+						break;
+					case 'x':
+						if(icon.numElements > 0)
+							icon.removeElementAt(0);
+						icon.addElement(timesIcon);
+						timesIcon.x = timesIcon.y = 10;
+						break;
+					case '?':
+						if(icon.numElements > 0)
+							icon.removeElementAt(0);
+						icon.addElement(hideIcon);
+						hideIcon.x = 9;
+						hideIcon.y = 10;
+						break;
+						
+					default:
+						//icon = plusIcon;
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Metadata>
+		[HostComponent('org.maths.nrich.flows.components.PanelButton')]
+	</fx:Metadata>
+	
+	<s:filters>
+		<s:GlowFilter blurX="4" blurY="4" color="0xffff00"
+					  alpha.up="0" alpha.over="1" alpha.down="0" alpha.disabled="0"/> 
+		<s:DropShadowFilter blurX="2" blurY="2" distance="2" color="0xffffff" alpha="0.3"/>
+	</s:filters>
+
+	<s:Group id="iconHolder" verticalCenter="0" horizontalCenter="0">
+		<s:Ellipse fill="{fill}" width="15" height="15" />
+		<s:Ellipse fill="{white}" x="6" y="2" width="3" height="2" /> 
+		<s:Ellipse fill="{white}" x="2" y="8" width="11" height="6" alpha="0.3">
+			<s:filters>
+				<s:BlurFilter blurX="3" blurY="3"/>
+			</s:filters>
+		</s:Ellipse>
+		<s:Group id="icon" alpha="0" alpha.down="1" alpha.over="1"/>
+		<s:Ellipse fill="{gradient}" width="15" height="15" /> 
+	</s:Group>
+	
+</s:Skin>

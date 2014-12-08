@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components:CollapsiblePanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+							 xmlns:s="library://ns.adobe.com/flex/spark" 
+							 xmlns:mx="library://ns.adobe.com/flex/halo"
+							 xmlns:components="org.maths.nrich.flows.components.*"
+							 skinClass="org.maths.nrich.flows.skins.CollapsiblePanelSkin"
+							 addedToStage="setup()"
+							 removedFromStage="tearDown()">
+	
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" />
+		<s:SolidColorStroke id="outline" />
+		<s:SolidColor id="fill"/>
+		<s:SolidColor id="white" color="0xffffff"/>
+		
+		<s:VGroup id="authorisedPanel" paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15" 
+				  horizontalAlign="right">
+			<!-- Configuration editors start here -->
+			<components:ConfigureNumbersPanel id="configureNumbers" title="Setup Numbers" outline="{outline}" fill="{fill}"
+											  flowGroup="{flowGroup}" numberPanel="{numberPanel}" />
+
+			<components:ConfigureInputsPanel id="configureInputs" title="Setup Inputs Panel" outline="{outline}" fill="{fill}"
+											 flowGroup="{flowGroup}" inputsPanel="{inputsPanel}"/>
+			<components:ConfigureFlowMakerPanel id="configureOperations" title="Setup Operations Panel" outline="{outline}" fill="{fill}"
+												 flowGroup="{flowGroup}" operationsPanel="{operationsPanel}" />
+<!--			<components:ConfigureOutputsPanel id="configureOutputs" title="Setup Outputs Panel" outline="{outline}" fill="{fill}"
+											 flowGroup="{flowGroup}" />
+-->
+			<s:Group height="5"/>
+			<s:RichText text="Add Sequence Generation" color="0xffffff"/>
+			<components:ConfigureSequencePanel id="configureSequence" title="Feedback and Memory" outline="{outline}" fill="{fill}"
+												 flowGroup="{flowGroup}" sequencePanel="{sequencePanel}" />
+<!--			<components:ConfigureFunctionPanel id="configureFunction" title="Configure Function" outline="{outline}" fill="{fill}"/>		
+-->			
+<!--			<s:Button id="logoutButton" label="Log out" click="logout()" />
+-->
+			<s:Group>
+				<s:layout>
+					<s:TileLayout requestedColumnCount="2"/>
+				</s:layout>
+				<s:Button id="resetButton" label="Reload" click="flowPanel.reload()" />
+				<s:Button id="clearButton" label="Clear All" click="flowPanel.clear()" />
+				<s:Button id="loadButton" label="Load Example" click="flowPanel.load()" />
+				<s:Button id="saveButton" label="Save Example" click="flowPanel.save()" />
+			</s:Group>
+		</s:VGroup>
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			public var flowPanel:FlowPanel;
+			
+			[Bindable]
+			public var password:String = "open";
+			
+			[Bindable]
+			public var numberPanel:DropNumberPanel;
+			
+			[Bindable]
+			public var operationsPanel:FlowMakerPanel;
+
+			[Bindable]
+			public var inputsPanel:InputsPanel;
+			
+			[Bindable]
+			public var sequencePanel:SequencePanel;
+		
+			[Bindable]
+			public var flowGroup:FlowGroup;
+			
+			private function setup():void
+			{
+				pwdInput.addEventListener(FlexEvent.ENTER, enterKey);
+				
+				for(var i:int = 0; i < authorisedPanel.numElements; i++) {
+					var panel:CollapsiblePanel = authorisedPanel.getElementAt(i) as CollapsiblePanel;
+					if(panel) {
+						panel.addEventListener(CollapsiblePanel.EXPAND, panelExpanded);
+					}
+				}
+				
+				checkPassword();
+			}
+			
+			
+			private function tearDown():void
+			{
+				pwdInput.removeEventListener(FlexEvent.ENTER, enterKey);
+				
+				for(var i:int = 0; i < authorisedPanel.numElements; i++) {
+					var panel:CollapsiblePanel = authorisedPanel.getElementAt(i) as CollapsiblePanel;
+					if(panel) {
+						panel.removeEventListener(CollapsiblePanel.EXPAND, panelExpanded);
+					}
+				}
+			}
+			
+			private function panelExpanded(event:Event):void 
+			{
+				var expandedPanel:CollapsiblePanel = event.currentTarget as CollapsiblePanel;
+				for(var i:int = 0; i < authorisedPanel.numElements; i++) {
+					var panel:CollapsiblePanel = authorisedPanel.getElementAt(i) as CollapsiblePanel;
+					if(panel && panel != expandedPanel && panel.currentState == "maximised") {
+						panel.currentState = "normal";
+						panel.invalidateSkinState();
+					}
+				}
+				
+			}
+			
+			private function enterKey(event:FlexEvent):void 
+			{
+				checkPassword();
+			}
+			
+			private function checkPassword():void
+			{
+				if(pwdInput.text == password) {
+					this.removeElement(loginPanel);
+					this.addElement(authorisedPanel);
+				}
+				else {
+					errorStatus.visible = true;	
+					timer.addEventListener(TimerEvent.TIMER, removeErrorStatus);
+					timer.start();
+				}
+			}
+			
+			private function removeErrorStatus(event:TimerEvent):void 
+			{
+				timer.stop();
+				timer.removeEventListener(TimerEvent.TIMER, removeErrorStatus);
+				errorStatus.visible = false;
+			}
+			
+			private function logout():void {
+				this.removeElement(authorisedPanel);
+				pwdInput.text = "";
+				this.addElement(loginPanel);
+			}
+			
+			private var timer:Timer = new Timer(3000);
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup id="loginPanel" paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="15">
+		<s:Label text="Enter Password:" color="0xffffff"/>
+		<s:TextInput id="pwdInput" displayAsPassword="true" maxChars="10"	/>
+		<s:Button id="loginButton" label="Login" click="checkPassword()" />
+		<s:Label id="errorStatus" text="Invalid Password" color="0xff6666" visible="false"/>
+	</s:VGroup>
+
+</components:CollapsiblePanel>

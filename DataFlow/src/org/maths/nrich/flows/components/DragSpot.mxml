@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" width="20" height="20"
+		 addedToStage="setup()"
+		 removedFromStage="tearDown()"
+		 buttonMode="true"
+		 useHandCursor = "true"
+		 >
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="over"/>
+		<s:State name="down"/>
+	</s:states>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColorStroke id="stroke" />
+		<s:SolidColor id="fill" />
+		
+		<s:SolidColorStroke id="strokeOver" color="0xffdd00" weight="5"/>
+		<s:SolidColor id="fillOver" color="0xffdd00"/>
+		
+		<s:SolidColorStroke id="strokeDown" color="0xff0088" weight="1"/>
+		<s:SolidColor id="fillDown" color="0xff0088"/>
+	</fx:Declarations>
+
+	<fx:Script>
+		<![CDATA[
+			private function setup():void
+			{
+				this.addEventListener(MouseEvent.MOUSE_OVER, over);
+				this.addEventListener(MouseEvent.MOUSE_OUT, normal);
+				this.addEventListener(MouseEvent.MOUSE_DOWN, down);
+				this.addEventListener(MouseEvent.MOUSE_UP, normal);
+			}
+			private function tearDown():void
+			{
+				this.removeEventListener(MouseEvent.MOUSE_OVER, over);
+				this.removeEventListener(MouseEvent.MOUSE_OUT, normal);
+				this.removeEventListener(MouseEvent.MOUSE_DOWN, down);
+				this.removeEventListener(MouseEvent.MOUSE_UP, normal);
+			}
+			
+			private function over(event:MouseEvent):void
+			{
+				currentState = "over";
+			}
+			private function normal(event:MouseEvent):void
+			{
+				currentState = "normal";
+			}
+			private function down(event:MouseEvent):void
+			{
+				currentState = "down";
+			}
+		]]>
+	</fx:Script>
+	
+	<s:Ellipse width="15" height="15" 
+			   stroke.normal="{stroke}" fill.normal="{fill}"
+			   stroke.over="{strokeOver}" fill.over="{fillOver}"
+			   stroke.down="{strokeDown}" fill.down="{fillDown}"
+			   />
+
+</s:Group>

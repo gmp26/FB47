@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/halo"
+		creationComplete = "init()"
+		implements="org.maths.nrich.flows.interfaces.ISourceSkin"
+		xmlns:parts="org.maths.nrich.flows.skins.parts.*" 
+		xmlns:components="org.maths.nrich.flows.components.*">
+	
+<!--		addedToStage="setup()"
+		removedFromStage="tearDown()">
+-->	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.components.*;
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			
+			import spark.components.Label;
+			
+			public static const PLOT:String = "plot";
+
+			private function init():void
+			{
+				trace("OutputSkin init");				
+			}
+			
+			
+			public function get padContainer():Group {
+				return padWrapper;
+			}
+			
+			public function get catcher():Catcher
+			{
+				return hostComponent as Catcher;
+			}
+			
+			[Bindable]
+			public var flowGroup:FlowGroup;
+					
+			private var _title:String = "Output";
+			[Bindable]
+			public function get title():String
+			{
+				return _title;
+			}
+			public function set title(s:String):void
+			{
+				_title = s;
+			}
+
+			public function get titleHolder():Label
+			{
+				return null;
+			}
+			
+		]]>
+	</fx:Script>
+
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+	
+	<fx:Metadata> 
+		[HostComponent("org.maths.nrich.flows.components.Catcher")] 
+	</fx:Metadata>
+	
+	<components:TitledPanel title=""
+							skinClass="org.maths.nrich.flows.skins.UndertitledPanelSkin"
+							fill = "{hostComponent.sourceFill}">
+
+		
+		<s:VGroup  id="sourceArea" 
+				   paddingLeft="20" paddingRight="20" paddingTop="20" paddingBottom="0" >
+			<s:HGroup width="100%" verticalAlign="middle" id="hWrapper">
+				<s:RichEditableText id="fnameText" color="0xffffff" fontSize="36" fontFamily="_serif" fontStyle="italic"
+									textAlign="left" text="f"/>
+
+				<s:RichText  color="0xffffff" fontSize="36" fontFamily="_serif" 
+							 textAlign="left">
+					<s:content>
+						<s:span fontStyle="italic">:</s:span> 
+					</s:content>
+				</s:RichText>
+				<s:RichText id="varsText" color="0xffffff" fontSize="36" fontFamily="_serif" fontStyle="italic"
+							textAlign="left" text="x"/>
+
+				<s:RichText styleName="arrow" color="0xffffff" fontSize="36" fontFamily="_sans" textAlign="right">
+					<s:content>→</s:content>
+				</s:RichText>
+				
+				<s:Group id="source">
+					
+					<!-- source rectangle -->
+					<s:Group>
+						
+						<s:Rect id="sourceRect"
+								radiusX="10"
+								width="100%"
+								height="100%"
+								stroke="{hostComponent.flowStroke}"
+								fill="{hostComponent.ioPadColour}" />
+						
+						<!-- source contents on top of source -->
+						<s:VGroup id="border"  styleName="sourcePad">					
+							
+							<s:HGroup id="padWrapper">
+								
+								
+								<parts:DropPad id="pad0" numberPadColour="{hostComponent.numberPadColour}" fontSize="{hostComponent.fontSize}" expression="{hostComponent.arg0}"/>
+								
+								<!-- Spacer required to get the enclosing HGroup width right -->
+								<s:Group  width.normal="0" height.normal="0"/>
+								
+							</s:HGroup>
+							
+							<!-- Spacer required to get the enclosing VGroup height right -->
+							<s:Group  width.normal="0" height.normal="0"/>
+							
+						</s:VGroup>
+						
+					</s:Group>
+					
+				</s:Group>
+			</s:HGroup>
+			
+<!--			<s:HGroup width="100%">
+				<s:Group width="100%"/>
+				<s:Button id="plotButton" label="Plot"  width="50" />
+			</s:HGroup>
+-->
+			<s:HGroup>
+				<components:SlimButton id="runButton" 
+									   title="Drop" color="0xffffff"
+									   skinClass="org.maths.nrich.flows.skins.SlimButtonSkin"/>	
+				
+				<components:SlimButton id="minimiseButton" 
+									   title="Define" downtitle="Define" color="0xffffff"
+									   skinClass="org.maths.nrich.flows.skins.SlimButtonSkin"
+									   />	
+			</s:HGroup>
+			
+		</s:VGroup>	
+	
+	</components:TitledPanel>
+	
+	
+</s:Skin>

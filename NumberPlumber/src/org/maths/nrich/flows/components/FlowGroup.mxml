@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" 
+		 addedToStage = "init()"
+		 xmlns:components="org.maths.nrich.flows.components.*" > 
+
+<!--
+	A FlowGroup is a container for Flow instances. The bounds of the FlowGroup determine the dragBounds of all
+	the child Flows.
+	
+	Flow sinks can be connected to Flow sources by dragging and dropping only if both the flows are members
+	of the same FlowGroup.
+-->	
+	<fx:Script>
+		<![CDATA[
+			import com.greensock.TweenMax;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.FlexGlobals;
+			
+			import org.maths.Expression;
+			import org.maths.XMLUtilities;
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			import org.maths.nrich.flows.model.vo.Mapping;
+			import org.maths.nrich.flows.model.vo.SinkSourceLink;
+			import org.maths.nrich.flows.skins.parts.DropPad;
+			import org.maths.nrich.flows.skins.sources.BinaryMapSkin;
+			import org.maths.nrich.flows.skins.sources.BinarySkin;
+			import org.maths.nrich.flows.skins.sources.DecimalSourceSkin;
+			import org.maths.nrich.flows.skins.sources.DragnDropSourceSkin;
+			import org.maths.nrich.flows.skins.sources.FeedbackSourceSkin;
+			import org.maths.nrich.flows.skins.sources.MemoryRegisterSkin;
+			import org.maths.nrich.flows.skins.sources.OverSkin;
+			import org.maths.nrich.flows.skins.sources.PostFixSkin;
+			import org.maths.nrich.flows.skins.sources.PowerSkin;
+			import org.maths.nrich.flows.skins.sources.RandomDecimalSkin;
+			import org.maths.nrich.flows.skins.sources.RandomSourceSkin;
+			import org.maths.nrich.flows.skins.sources.StepperSourceSkin;
+			import org.maths.nrich.flows.skins.sources.LogSkin;
+			import org.maths.nrich.flows.skins.sources.UnaryMapSkin;
+			import org.maths.nrich.flows.skins.sources.UnarySkin;
+			
+			public static const STATUSCHANGE:String = "statusChange";
+			public static const MODECHANGE:String = "modeChange";
+			
+			private var timer:Timer;
+			
+			public var dropTime:Number = 1.0;
+			
+			public var graphPanel:GraphPanel;
+			public var tablePanel:TablePanel;
+			
+			public var operationsPanel:FlowMakerPanel;
+			
+			public var tableData:ArrayCollection;
+			
+			private var _useRadians:Boolean = true;
+			public function get useRadians():Boolean
+			{
+				return _useRadians;
+			}
+			public function set useRadians(b:Boolean):void
+			{
+				var fList:Vector.<Flow> = getAllFlowsList();
+				for(var i:int = 0; i < fList.length; i++) {
+					var f:Flow = fList[i];
+					if(!f.op || f.arity != 1) continue;
+					if(_useRadians && !b) {
+						// convert to degrees
+						f.op = opToDegrees(f.op);
+					}
+					else if(!useRadians && b) {
+						// convert to radians
+						f.op = opFromDegrees(f.op);
+					}
+				}
+				_useRadians = b;
+			}
+			
+			public function opToDegrees(op:String):String {
+				if(op.match(/((sin)|(cos)|(tan))$/))
+					return op + "d";
+				else
+					return op;
+			}
+			
+			public function opFromDegrees(op:String):String
+			{
+				if(op.match(/(sind)|(cosd)|(tand)/))
+					return op.substr(0, op.length-1);
+				else
+					return op;
+			}
+			
+			public function internalOp(op:String):String {
+				if(useRadians) return op;
+				return opToDegrees(op);
+			}
+			
+			public function externalOp(op:String):String {
+				if(useRadians) return op;
+				return opFromDegrees(op);
+			}
+			
+			public static const FLOW_CREATE_DELETE:String = "flowCreateDelete";
+			
+			private function init(): void
+			{
+				
+				// Register some special Flows
+				registerClassAlias("binaryFlow", BinaryFlow);
+				registerClassAlias("binaryMap", BinaryMap);
+				registerClassAlias("decimalSource", DecimalSource);
+				registerClassAlias("dragnDropSource", DragnDropSource);
+				registerClassAlias("feedbackSource", FeedbackSource);
+				registerClassAlias("memoryRegister", MemoryRegister);
+				registerClassAlias("randomSource", RandomSource);
+				registerClassAlias("randomDecimalSource", RandomDecimalSource);
+				registerClassAlias("stepperSource", StepperSource);
+				registerClassAlias("unaryFlow", UnaryFlow);
+				registerClassAlias("unaryMap", UnaryMap);
+				
+				// Register some special case skin classes so we can serialise them to XML
+				registerClassAlias("PostFixSkin", PostFixSkin)
+				registerClassAlias("OverSkin", OverSkin);
+				registerClassAlias("PowerSkin", PowerSkin);
+				registerClassAlias("LogSkin", LogSkin);
+				registerClassAlias("UnarySkin", UnarySkin);
+				registerClassAlias("BinarySkin", BinarySkin);
+				registerClassAlias("UnaryMapSkin", UnaryMapSkin);
+				registerClassAlias("BinaryMapSkin", BinaryMapSkin);
+				registerClassAlias("DecimalSourceSkin", DecimalSourceSkin);
+				registerClassAlias("DragnDropSourceSkin", DragnDropSourceSkin);
+				registerClassAlias("FeedbackSourceSkin", FeedbackSourceSkin);
+				registerClassAlias("RandomSourceSkin", RandomSourceSkin);
+				registerClassAlias("RandomDecimalSkin", RandomDecimalSkin);
+				registerClassAlias("StepperSourceSkin", StepperSourceSkin);
+				registerClassAlias("MemoryRegisterSkin", MemoryRegisterSkin);
+				
+			}
+			
+			private function keyhit(event:KeyboardEvent):void
+			{
+				trace(event.charCode);
+				if(event.charCode == 32) 
+					paused.visible = !paused.visible;
+				if(paused.visible) {
+					TweenMax.pauseAll();
+				}
+				else {
+					TweenMax.resumeAll();
+				}
+			}
+			
+			
+			public function findCatcher(sinkFlow:Flow, sink:Sinker, dropTarget:DisplayObject):SinkSourceLink
+			{
+				trace(dropTarget);
+				var pad:DropPad;
+				var padZone:Group = dropTarget as Group;
+				if(!padZone)
+					return null;
+				if(padZone.id=="dropPadZone")
+					pad = padZone.parentDocument as DropPad;
+				if(pad) {
+					var catcher:Catcher = (pad.parentDocument as ISourceSkin).catcher;
+					return new SinkSourceLink(sinkFlow, sink, catcher.parentFlow, catcher, pad);
+				}
+				return null;				
+			}
+			
+			private var _showValues:int = 0;
+			public function get showValues():int
+			{
+				return _showValues;
+			}
+			public function set showValues(show:int):void 
+			{
+				_showValues = show;
+				for(var i:int = 0; i < this.numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f) {
+						f.showValues = show;
+					}
+				}
+				invalidateProperties();
+			}		
+			
+			public function deselectAllBut(flow:Flow):void
+			{
+				for(var i:int = 0; i < this.numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f)
+						if(f != flow)
+							f.selected = false;
+				}
+			}
+			
+			public function get inputFlows():Vector.<Flow>
+			{
+				var inputs:Vector.<Flow> = new Vector.<Flow>();
+				for(var i:int = 0; i < numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f) {
+						if(f.isInput)
+							inputs.push(f);
+					}
+				}
+				return inputs;
+			}
+			
+			public function resetValues():void
+			{
+				var inputs:Vector.<Flow> = new Vector.<Flow>();
+				for(var i:int = 0; i < numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f) f.resetValues();
+				}
+			}
+			
+			public function getInputList():Vector.<InputFlow>
+			{
+				var list:Vector.<InputFlow> = new Vector.<InputFlow>;
+				for(var i:int = 0; i < numElements; i++) {
+					var f:InputFlow = this.getElementAt(i) as InputFlow;
+					if(f) {
+						list.push(f);
+					}
+				}
+				return list;
+			}
+			
+			public function getSequenceList():Vector.<InputFlow>
+			{
+				var list:Vector.<InputFlow> = new Vector.<InputFlow>;
+				for(var i:int = 0; i < numElements; i++) {
+					var f:InputFlow = this.getElementAt(i) as InputFlow;
+					if(f && (f is FeedbackSource || f is MemoryRegister)) {
+						list.push(f);
+					}
+				}
+				return list;				
+			}
+			
+			public function getOutputList():Vector.<OutputFlow>
+			{
+				var list:Vector.<OutputFlow> = new Vector.<OutputFlow>;
+				for(var i:int = 0; i < numElements; i++) {
+					var f:OutputFlow = this.getElementAt(i) as OutputFlow;
+					if(f) {
+						list.push(f);
+					}
+				}
+				return list;
+			}
+			
+			public function getFlowList():Vector.<Flow>
+			{
+				var list:Vector.<Flow> = new Vector.<Flow>;
+				for(var i:int = 0; i < numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f && (f.isInput || f.isOutput)) continue;
+					if(f) {
+						list.push(f);
+					}
+				}
+				return list;
+			}
+			
+			public function getAllFlowsList():Vector.<Flow>
+			{
+				var list:Vector.<Flow> = new Vector.<Flow>;
+				for(var i:int = 0; i < numElements; i++) {
+					var f:Flow = this.getElementAt(i) as Flow;
+					if(f) {
+						list.push(f);
+					}
+				}
+				return list;
+			}
+			
+			public function removeAllFlows():void
+			{
+				var list:Vector.<Flow> = getAllFlowsList();
+				while(list.length > 0) {
+					list.pop().removeMe();
+				}
+			}
+			
+			/**
+			 *  Binary flows must be primed because they can only fire when both pads are available
+			 *  For non-binary flows this is a null op.
+			 */
+			public function primeBinaryFlows():Vector.<Flow>
+			{				
+				var flist:Vector.<Flow> = getFlowList();
+				var promotedBinaries:Vector.<Flow> = new Vector.<Flow>;
+				for(var i:int = 0; i < flist.length; i++) {
+					var bf:Flow = flist[i];
+					//if(bf.arity == 2)
+						bf.resetForStep();
+					if(bf.preStepCheck())
+						promotedBinaries.push(bf);
+				}
+				return promotedBinaries;
+			}
+			
+			public function step():void {
+				
+				if(paused.visible)
+					return;
+			
+				var promotedBinaries:Vector.<Flow> = primeBinaryFlows();
+				
+				// Start the step by firing the inputs and memory registers
+				var list:Vector.<InputFlow> = getInputList();
+				for(var i:int = 0; i < list.length; i++) {
+					var f:InputFlow = list[i];
+					if(f) {
+						//trace("inputFlow="+f.name);
+						f.step(false);
+					}
+				}
+				
+				// Also fire off promoted binaries
+				for(i = 0; i < promotedBinaries.length; i++) {
+					var bf:Flow = promotedBinaries[i];
+					if(bf) {
+						//trace("inputFlow="+f.name);
+						bf.step(false);
+					}
+				}
+			}
+			
+			/**
+			 * mappings indexed by Output Flow
+			 */
+			public var mappingList:Dictionary;
+			
+		
+			private var colourIndex:uint = 0;
+			
+			public function getOutputFill(output:OutputFlow):SolidColor
+			{
+				var fill:SolidColor = new SolidColor(Mapping.colourTable[colourIndex]);
+				colourIndex = (colourIndex + 1) % Mapping.colourTable.length;
+				return fill;
+			}
+			
+			public function predecessorsOf(flow:Flow):Vector.<Flow>
+			{
+				var preds:Vector.<Flow> = new Vector.<Flow>;
+				for(var i:int = 0; i < this.numElements; i++) {
+					var f:Flow = getElementAt(i) as Flow;
+					if( f && f.nextFlows.indexOf(flow) >= 0 && preds.indexOf(f) < 0) {
+						preds.push(f);
+					}
+				}
+				return preds;
+			}
+			
+			// TODO: Split into NewInputValue and NewOutputValue 
+			// - maybe when args are assigned in InputFlow and OutputFlow respectively
+			// - setting the input should CLEAR the output
+			//
+			
+			public function newInputValue(input:InputFlow):void {
+				var variable:String = input.padVariable;
+				var value:Expression = input.arg0;
+				var output:OutputFlow = input.flowMap.output;
+				if(output) {
+					var i:int = output.varNames.indexOf(variable);
+					if(i < 0)
+						trace("variable not found");
+					else
+						output.setVarValue(variable, value);
+				}
+			}
+
+			public function getUniqueFunctionName(hint:String):String 
+			{
+				var outputs:Vector.<OutputFlow> = getOutputList();
+				for(var i:int = 0; i < outputs.length; i++) {
+					if(outputs[i].functionName == hint) {
+						
+						var char:String = hint.charAt(0);
+						do {
+							if(char=="z") char = "a"
+							else if(char=="Z") char = "A"
+							else char = String.fromCharCode(char.charCodeAt(0)+1)
+						}
+						while("eio()0123456789-+=*/<>~`^{}[]".indexOf(char) >= 0);
+						
+						hint = char + hint.substr(1);
+						i=0;
+					}
+				}
+				return hint;
+			}
+			
+			public function toXML():XML {
+				var fg:XML = <flowGroup colourIndex={colourIndex}/>;
+
+				var allFlows:Vector.<Flow> = this.getAllFlowsList();
+				for(var i:int = 0; i < allFlows.length; i++) {
+					allFlows[i].flowMap.xmlWritten = false;
+				}
+
+				var outputs:Vector.<OutputFlow> = getOutputList();
+				for(i = 0; i < outputs.length; i++) {
+					fg.appendChild(outputs[i].flowMap.toXML());
+				}
+				
+				// write out the rest
+				for(i = 0; i < allFlows.length; i++) {
+					var xml:XML = allFlows[i].flowMap.toXML();
+					if(xml) fg.appendChild(xml);
+				}
+				
+				return fg;
+			}
+
+			public function fromXML(fg:XML):void {
+				
+				colourIndex = XMLUtilities.intAttr(fg.@colourIndex, 0);
+				
+				var flows:Vector.<Flow> = getAllFlowsList();
+				
+				// remove any existing flows
+				while(flows.length > 0) {
+					flows.pop().removeMe();
+				}
+				
+				// add new Flows
+				var mapList:XMLList = fg.map;
+				for(var i:int=0; i < mapList.length(); i++) {
+					var mapXML:XML = mapList[i];
+					var mapping:Mapping = new Mapping();
+					mapping.installFromXML(mapXML, this);
+					mapping.connectFlows(mapXML);
+					if(mapping.output) mapping.output.backPropagate();
+				}
+				
+				dispatchEvent(new Event(FLOW_CREATE_DELETE));
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:SolidColor id="ioPadColour" color="0xcccccc" alpha="1"/>
+	</fx:Declarations>
+
+	<s:layout>
+		<s:BasicLayout />
+	</s:layout>
+
+	<!-- this invisible rectangle forces correct 100% width and height of the FlowGroup-->
+	<s:Rect width="100%" height="100%"/>
+
+	<s:HGroup width="100%" height="100%" verticalAlign="middle">
+		<s:RichText id="paused" text="Paused" width="100%" fontSize="100" alpha="0.3" color="0xffffff" textAlign="center" visible="false"/>
+	</s:HGroup>
+
+<!--	<components:Flow
+		id="inputStepper"
+		isInput="true"
+		x = "10" y="50"
+		skinClass="{FlowSkin}"
+		sourceSkin="{StepperSourceSkin}"
+		/>
+	
+	<components:Flow
+		id="randomInput"
+		isInput="true"
+		x = "150" y="50"
+		skinClass="{FlowSkin}"
+		sourceSkin="{RandomSourceSkin}"
+		/>
+	
+	<components:Flow
+		id="dropInput"
+		isInput="true"
+		x = "300" y="50"
+		skinClass="{FlowSkin}"
+		sourceSkin="{DragnDropSourceSkin}"
+		/>
+	
+-->
+<!--
+	<components:Flow
+		id="aUnary"
+		x="200" y="450"
+		skinClass = "{FlowSkin}"
+		sourceSkin = "{UnarySkin}"
+		op = "cos"
+		arg0 = "{new Expression(3)}"
+		/>
+		
+	<components:Flow
+		id="aBinop"
+		x="100"
+		y="250"
+		skinClass = "{FlowSkin}"
+		sourceSkin = "{BinarySkin}"
+		arg0 = "{new Expression(1)}"
+		op = "plus"
+		arg1 = "{new Expression(2)}"
+		/>
+	
+	<components:Flow
+		id="anOver"
+		x="250"
+		y="250"
+		skinClass = "{FlowSkin}"
+		sourceSkin = "{OverSkin}"
+		arg0 = "{new Expression(1)}"
+		op = "over"
+		arg1 = "{new Expression(2)}"
+		/>
+-->
+<!--	
+	<components:Flow
+		id="aDragNumber"
+		x="100"
+		y="300"
+		skinClass = "{FlowSkin}"
+		sourceSkin = "{DragNumberSkin}"
+		arg0 = "{new Expression(4)}"
+		/>
+-->
+	
+<!--	<components:Flow
+		id="outputPad"
+		isOutput = "true"
+		x="400"
+		y="400"
+		skinClass = "{FlowSkin}"
+		sourceSkin = "{OutputPadSkin}"
+		arg0 = "{null}"
+		/>
+-->	
+<!--
+	<components:MemoryRegister
+		id="register"
+		padVariable="MEM"
+		x = "200" y="200"
+		/>
+	
+	<components:OutputFlow
+		id="outputFlow"
+		varNames="{Vector.&lt;String&gt;(['x','y'])}"
+		/>		
+	
+	<components:OutputFlow
+		id="outputFlow2"
+		functionName="g"
+		/>		
+	
+	<components:OutputFlow
+		id="outputFlow3"
+		functionName="h"
+		/>		
+-->	
+
+	
+</s:Group>

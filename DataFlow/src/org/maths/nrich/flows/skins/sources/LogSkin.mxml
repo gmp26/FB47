@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		xmlns:s="library://ns.adobe.com/flex/spark" 
+		xmlns:mx="library://ns.adobe.com/flex/halo"
+		xmlns:parts="org.maths.nrich.dataflow.view.skins.parts.*"
+		creationComplete = "init()"
+		implements="org.maths.nrich.flows.interfaces.ISourceSkin"
+		xmlns:flowparts="org.maths.nrich.dataflow.view.components.flowparts.*" xmlns:parts1="org.maths.nrich.flows.skins.parts.*" xmlns:components="org.maths.nrich.flows.components.*">
+	
+	<fx:Script>
+		<![CDATA[
+			import org.maths.nrich.flows.components.Catcher;
+			import org.maths.nrich.flows.interfaces.ISourceSkin;
+			
+			import spark.components.Label;
+			import spark.layouts.BasicLayout;
+
+			private function init():void
+			{
+				trace("LogSkin init");
+			}
+			
+			public function get padContainer():Group {
+				return padWrapper;
+			}
+			
+			public function get catcher():Catcher
+			{
+				return hostComponent as Catcher;
+			}
+			
+			private var _title:String = "Log";
+			[Bindable]
+			public function get title():String
+			{
+				return _title;
+			}
+			public function set title(s:String):void
+			{
+				_title = s;
+			}
+			
+			public function get titleHolder():Label
+			{
+				return null;
+			}
+			
+
+		]]>
+	</fx:Script>
+
+	<fx:Declarations>
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="hidden"/>
+	</s:states>
+	
+	<fx:Metadata> 
+		[HostComponent("org.maths.nrich.flows.components.Catcher")]
+	</fx:Metadata>
+	
+	<s:Group id="source" layout="{new BasicLayout()}">
+		
+		<components:DragSpot id="dragSpot" width="15" height="15" x="{border.width/2-5}" y="{border.height}" stroke="{hostComponent.flowStroke}" fill="{hostComponent.flowColour}" />
+	
+		<!-- source rectangle -->
+		<s:Group id="sourceArea">
+			
+			<s:Rect id="sourceRect"
+					radiusX="10"
+					width="100%"
+					height="100%"
+					stroke="{hostComponent.flowStroke}"
+					fill="{hostComponent.sourceFill}" />
+			
+			<!-- source contents on top of source -->
+			<s:VGroup id="border" styleName="sourcePad">					
+					
+				<s:Group id="padWrapper" width="{pad0.x + pad0.width + 7}" height="{pad0.height + 20}">
+					<parts1:OpView  id="opView" left="0" top="0" color="#ffffff" fontFamily="Arial" fontSize="{hostComponent.fontSize}" />
+					<parts1:DropPad id="pad1" left="20" top="25" numberPadColour="{hostComponent.numberPadColour}" fontSize="{hostComponent.fontSize - 5}"  expression="{hostComponent.arg1}"/>
+
+					<parts1:DropPad id="pad0" left="40" top="0" numberPadColour="{hostComponent.numberPadColour}" fontSize="{hostComponent.fontSize}" expression="{hostComponent.arg0}"/>
+			
+					<!-- Spacer required to get the enclosing HGroup width right -->
+					<s:Group  width.normal="0" height.normal="0"/>
+			
+				</s:Group>
+				
+				<!-- Spacer required to get the enclosing VGroup height right -->
+				<s:Group  width.normal="0" height.normal="0"/>
+				
+			</s:VGroup>
+		
+		</s:Group>
+	</s:Group>
+	
+
+</s:Skin>
